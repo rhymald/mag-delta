@@ -2,11 +2,11 @@
 Developing game: mechanics are based on my novels. Trial number four! Here we go:
 
 # Primitives basics:
-|Object|[]Properties|Description|
+|Object|Properties|Description|
 |---:|:---:|:---|
 |Health|Max, Current|obviously, the most valuable resource|
 |Stream|Length (Creation), Width (Alteration), Power (Destruction), Nature (Element)|Universal vector to define any natural phenomena|
-|Pool|*Dot|Container for unused dots, |
+|Pool|Max, Dots|Container for unused dots, |
 |Dot|Weight, Element|Energy point, most usable resource|
 
 
