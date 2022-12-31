@@ -15,9 +15,9 @@ Everything is natural phenomena!
 
 |v Minor / Major >|Cre|Alt|Des|
 |---:|:---:|:---:|:---:|
-|**Cre**ation|Conjuration|Restoration|Decay|
-|**Alt**eration|Boon|Modification|Condition|
-|**Des**truction|Barrier|Enchantment|Damage|
+|**Cre**ation|Conjuration|Boon|Barrier|
+|**Alt**eration|Restoration|Modification|Enchantment|
+|**Des**truction|Decay|Condition|Damage|
 |All|Summoning|Transfiguration|Disaster|
 
 Elements:
