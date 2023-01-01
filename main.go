@@ -12,7 +12,14 @@ import (
 
 type Dot struct {
   Weight float64
-  Element float64
+  Element string
+}
+
+type Stream struct {
+  Cre float64
+  Alt float64
+  Des float64
+  Element string
 }
 
 type Player struct {
@@ -23,12 +30,7 @@ type Player struct {
   }
   // Energetical
   Nature struct {
-    Stream struct {
-      Length float64
-      Width float64
-      Power float64
-      Element string
-    }
+    Stream Stream
     Pool struct {
       Max float64
       Dots []Dot
@@ -38,16 +40,24 @@ type Player struct {
 
 var You Player
 var Target Player
+var Action string
 
 func init() {
   fmt.Println("[Initializing...]")
   You = PlayerBorn(1)
+  go func(){
+    go func(){ Regeneration(&You.Nature.Pool.Dots, &You.Health.Current, You.Nature.Pool.Max, You.Health.Max, You.Nature.Stream) }()
+  }()
   return
 }
 
 func main() {
   fmt.Println("[Go!..]")
   FoeSpawn(4)
+  for {
+    fmt.Scanf("Any move?..", &Action)
+    PlayerStatus(You)
+  }
   return
 }
 
@@ -55,29 +65,29 @@ func PlayerBorn(mean float64) Player {
   playerTuple := [][]string{}
   buffer := Player{}
   fmt.Println("Player creation start:")
-  buffer.Health.Max = (mean/100+1)*(mean/100+1)*50 // from db
+  buffer.Health.Max = (mean/10+1)*(mean/10+1)*50 // from db
   buffer.Health.Current = math.Sqrt(buffer.Health.Max+1)-1 //from db
   // current := fmt.Sprintf("Health|Current: %0.0f|Max: %0.0f|Rate: %1.0f%%", buffer.Health.Current, buffer.Health.Max, 100*buffer.Health.Current/buffer.Health.Max)
   current := fmt.Sprintf("Health|Max: %0.0f|Current: %0.0f|Rate: %1.0f%%", buffer.Health.Max, buffer.Health.Current, 100*buffer.Health.Current/buffer.Health.Max)
   playerTuple = AddRow(current, playerTuple)
-  buffer.Nature.Stream.Length  = 1+Rand()
-  buffer.Nature.Stream.Width   = 1+Rand()
-  buffer.Nature.Stream.Power   = 1+Rand()
-  stabilizer := mean/Vector(buffer.Nature.Stream.Length, buffer.Nature.Stream.Width, buffer.Nature.Stream.Power)
-  buffer.Nature.Stream.Length *= stabilizer
-  buffer.Nature.Stream.Width  *= stabilizer
-  buffer.Nature.Stream.Power  *= stabilizer
+  buffer.Nature.Stream.Cre  = 1+Rand()
+  buffer.Nature.Stream.Alt   = 1+Rand()
+  buffer.Nature.Stream.Des   = 1+Rand()
+  stabilizer := mean/Vector(buffer.Nature.Stream.Cre, buffer.Nature.Stream.Alt, buffer.Nature.Stream.Des)
+  buffer.Nature.Stream.Cre *= stabilizer
+  buffer.Nature.Stream.Alt  *= stabilizer
+  buffer.Nature.Stream.Des  *= stabilizer
   buffer.Nature.Stream.Element = "Common"
   playerTuple = AddRow("Element|Creation|Alteration|Destruction",playerTuple)
   row := fmt.Sprintf(
     "%s|%0.3f|%0.3f|%0.3f",
     buffer.Nature.Stream.Element,
-    buffer.Nature.Stream.Length,
-    buffer.Nature.Stream.Width,
-    buffer.Nature.Stream.Power,
+    buffer.Nature.Stream.Cre,
+    buffer.Nature.Stream.Alt,
+    buffer.Nature.Stream.Des,
   )
   playerTuple = AddRow(row,playerTuple)
-  thickness := math.Pi / ( 1/buffer.Nature.Stream.Power + 1/buffer.Nature.Stream.Width + 1/buffer.Nature.Stream.Length)
+  thickness := math.Pi / ( 1/buffer.Nature.Stream.Des + 1/buffer.Nature.Stream.Alt + 1/buffer.Nature.Stream.Cre)
   buffer.Nature.Pool.Max = math.Sqrt( thickness *1024 + 1024) - 1
   playerTuple = AddRow( fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", buffer.Nature.Pool.Max, len(buffer.Nature.Pool.Dots), 100*float64(len(buffer.Nature.Pool.Dots))/float64(buffer.Nature.Pool.Max) ) ,playerTuple)
   PlotTable(playerTuple)
@@ -92,27 +102,49 @@ func FoeSpawn(mean float64) Player {
   buffer.Health.Current = buffer.Health.Max //from db
   current := fmt.Sprintf("Health|||Rate: %1.0f%%", 100*buffer.Health.Current/buffer.Health.Max)
   playerTuple = AddRow(current, playerTuple)
-  buffer.Nature.Stream.Length  = 1+Rand()
-  buffer.Nature.Stream.Width   = 1+Rand()
-  buffer.Nature.Stream.Power   = 1+Rand()
-  stabilizer := mean/Vector(buffer.Nature.Stream.Length, buffer.Nature.Stream.Width, buffer.Nature.Stream.Power)
-  buffer.Nature.Stream.Length *= stabilizer
-  buffer.Nature.Stream.Width  *= stabilizer
-  buffer.Nature.Stream.Power  *= stabilizer
+  buffer.Nature.Stream.Cre  = 1+Rand()
+  buffer.Nature.Stream.Alt   = 1+Rand()
+  buffer.Nature.Stream.Des   = 1+Rand()
+  stabilizer := mean/Vector(buffer.Nature.Stream.Cre, buffer.Nature.Stream.Alt, buffer.Nature.Stream.Des)
+  buffer.Nature.Stream.Cre *= stabilizer
+  buffer.Nature.Stream.Alt  *= stabilizer
+  buffer.Nature.Stream.Des  *= stabilizer
   buffer.Nature.Stream.Element = "Common"
   playerTuple = AddRow("Element|Creation|Alteration|Destruction",playerTuple)
   row := fmt.Sprintf(
     "%s|%0.3f|%0.3f|%0.3f",
     buffer.Nature.Stream.Element,
-    buffer.Nature.Stream.Length,
-    buffer.Nature.Stream.Width,
-    buffer.Nature.Stream.Power,
+    math.Sqrt(mean*mean/3),
+    math.Sqrt(mean*mean/3),
+    math.Sqrt(mean*mean/3),
+    // buffer.Nature.Stream.Length,
+    // buffer.Nature.Stream.Width,
+    // buffer.Nature.Stream.Power,
   )
   playerTuple = AddRow(row,playerTuple)
-  buffer.Nature.Pool.Max = math.Sqrt(buffer.Nature.Stream.Length*1024 + 1024) - 1
+  buffer.Nature.Pool.Max = math.Sqrt(buffer.Nature.Stream.Cre*1024 + 1024) - 1
   playerTuple = AddRow( fmt.Sprintf("Pool|Max: %0.0f", buffer.Nature.Pool.Max ) ,playerTuple)
   PlotTable(playerTuple)
   return buffer
+}
+
+func PlayerStatus(it Player) {
+  playerTuple := [][]string{}
+  fmt.Println("Player status:")
+  current := fmt.Sprintf("Health|Max: %0.0f|Current: %0.0f|Rate: %1.0f%%", it.Health.Max, it.Health.Current, 100*it.Health.Current/it.Health.Max)
+  playerTuple = AddRow(current, playerTuple)
+  playerTuple = AddRow("Element|Creation|Alteration|Destruction",playerTuple)
+  row := fmt.Sprintf(
+    "%s|%0.3f|%0.3f|%0.3f",
+    it.Nature.Stream.Element,
+    it.Nature.Stream.Cre,
+    it.Nature.Stream.Alt,
+    it.Nature.Stream.Des,
+  )
+  playerTuple = AddRow(row,playerTuple)
+  playerTuple = AddRow( fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", it.Nature.Pool.Max, len(it.Nature.Pool.Dots), 100*float64(len(it.Nature.Pool.Dots))/float64(it.Nature.Pool.Max) ) ,playerTuple)
+  PlotTable(playerTuple)
+
 }
 
 func Rand() float64 {
@@ -192,4 +224,19 @@ func AddRow(row string, tuple [][]string) [][]string {
   }
   tuple = append(tuple, buffer)
   return tuple
+}
+
+func Regeneration(pool *[]Dot, health *float64, max float64, maxhp float64, stream Stream) {
+  for {
+    if float64(len(*pool)) >= max { time.Sleep( time.Millisecond * time.Duration( 4096 )) ; return }
+    weight := math.Pow( math.Log2( 1+Vector(stream.Cre,stream.Des,stream.Alt) ), 2)
+    dot := Dot{ Element: stream.Element, Weight: weight }
+    pause := 1024
+    heal := 1.0
+    time.Sleep( time.Millisecond * time.Duration( pause ))
+    //block
+    *pool = append(*pool, dot )
+    if *health < maxhp { *health += heal }
+    //unblock
+  }
 }
