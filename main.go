@@ -91,7 +91,7 @@ func PlayerBorn(mean float64) Player {
   thickness := math.Pi / ( 1/buffer.Nature.Stream.Des + 1/buffer.Nature.Stream.Alt + 1/buffer.Nature.Stream.Cre)
   buffer.Nature.Pool.Max = math.Sqrt( thickness *1024 + 1024) - 1
   playerTuple = AddRow( fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", buffer.Nature.Pool.Max, len(buffer.Nature.Pool.Dots), 100*float64(len(buffer.Nature.Pool.Dots))/float64(buffer.Nature.Pool.Max) ) ,playerTuple)
-  PlotTable(playerTuple)
+  PlotTable(playerTuple, true)
   return buffer
 }
 
@@ -125,7 +125,7 @@ func FoeSpawn(mean float64) Player {
   playerTuple = AddRow(row,playerTuple)
   buffer.Nature.Pool.Max = math.Sqrt(buffer.Nature.Stream.Cre*1024 + 1024) - 1
   playerTuple = AddRow( fmt.Sprintf("Pool|Max: %0.0f", buffer.Nature.Pool.Max ) ,playerTuple)
-  PlotTable(playerTuple)
+  PlotTable(playerTuple, false)
   return buffer
 }
 
@@ -144,7 +144,7 @@ func PlayerStatus(it Player) {
   )
   playerTuple = AddRow(row,playerTuple)
   playerTuple = AddRow( fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", it.Nature.Pool.Max, len(it.Nature.Pool.Dots), 100*float64(len(it.Nature.Pool.Dots))/float64(it.Nature.Pool.Max) ) ,playerTuple)
-  PlotTable(playerTuple)
+  PlotTable(playerTuple, false)
 
 }
 
@@ -162,7 +162,7 @@ func Vector(props ...float64) float64 {
   return math.Sqrt(sum)
 }
 
-func PlotTable(tuple [][]string) {
+func PlotTable(tuple [][]string, stretch bool) {
   // tuple := tuple
   maxs := make([]int, len(tuple[0]))
   for j, y := range tuple {
@@ -173,12 +173,14 @@ func PlotTable(tuple [][]string) {
       maxs[i] = int(math.Max(2+float64(len(tuple[j][i])), float64(maxs[i])))
     }
   }
-  sums := 0
-  for _, each := range maxs { sums+=each }
-  // termWigth := int(os.Stdout.Fd())
-  termWigth, _, _ := term.GetSize(0)
-  modificator := float64(termWigth) / float64(sums + len(maxs) + 1)
-  for e, _ := range maxs { maxs[e] = int( float64(maxs[e])*modificator ) }
+  if stretch {
+    for e, _ := range maxs { maxs[e] = int( math.Log2(float64(maxs[e])+2)/math.Log2(1.1459) ) }
+    sums := 0
+    for _, each := range maxs { sums+=each }
+    termWigth, _, _ := term.GetSize(0)
+    modificator := float64(termWigth - len(maxs) - 2) / float64(sums)
+    for e, _ := range maxs { maxs[e] = int( float64(maxs[e])*modificator ) }
+  }
   //Head:
   fmt.Printf(" ╔")
   for i, wid := range maxs {
