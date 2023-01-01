@@ -8,6 +8,7 @@ import (
   "encoding/binary"
   "time"
   "strings"
+  "golang.org/x/term"
 )
 
 type Dot struct {
@@ -172,6 +173,12 @@ func PlotTable(tuple [][]string) {
       maxs[i] = int(math.Max(2+float64(len(tuple[j][i])), float64(maxs[i])))
     }
   }
+  sums := 0
+  for _, each := range maxs { sums+=each }
+  // termWigth := int(os.Stdout.Fd())
+  termWigth, _, _ := term.GetSize(0)
+  modificator := float64(termWigth) / float64(sums + len(maxs) + 1)
+  for e, _ := range maxs { maxs[e] = int( float64(maxs[e])*modificator ) }
   //Head:
   fmt.Printf(" ╔")
   for i, wid := range maxs {
@@ -228,7 +235,7 @@ func AddRow(row string, tuple [][]string) [][]string {
 
 func Regeneration(pool *[]Dot, health *float64, max float64, maxhp float64, stream Stream) {
   for {
-    if float64(len(*pool)) >= max { time.Sleep( time.Millisecond * time.Duration( 4096 )) ; return }
+    if max-float64(len(*pool))<1  { time.Sleep( time.Millisecond * time.Duration( 4096 )) ; return }
     weight := math.Pow( math.Log2( 1+Vector(stream.Cre,stream.Des,stream.Alt) ), 2)
     dot := Dot{ Element: stream.Element, Weight: weight }
     pause := 1024
