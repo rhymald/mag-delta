@@ -13,9 +13,9 @@ func PlotTable(tuple [][]string, stretch bool) {
   for j, y := range tuple {
     for i, _ := range y {
       if j == 0 {
-        for c := 0; c>len(maxs); c++ { maxs[i] = 2+ MaxInCell(tuple[0][i]) }
+        for c := 0; c>len(maxs); c++ { maxs[i] = 2+ maxInCell(tuple[0][i]) }
       }
-      maxs[i] = int(math.Max(2+float64( MaxInCell(tuple[j][i]) ), float64(maxs[i])))
+      maxs[i] = int(math.Max(2+float64( maxInCell(tuple[j][i]) ), float64(maxs[i])))
     }
   }
   if stretch {
@@ -36,7 +36,7 @@ func PlotTable(tuple [][]string, stretch bool) {
   }
   //String:
   for I, row := range tuple {
-    PlotRow(row, maxs)
+    plotRow(row, maxs)
     if I+1 == len(tuple) {
       //Footer:
       fmt.Printf(" ╚")
@@ -58,6 +58,7 @@ func PlotTable(tuple [][]string, stretch bool) {
     }
   }
 }
+
 func AddRow(row string, tuple [][]string) [][]string {
   buffer := strings.Split(row, "|")
   if len(tuple)==0 { return [][]string{buffer} }
@@ -69,14 +70,16 @@ func AddRow(row string, tuple [][]string) [][]string {
   tuple = append(tuple, buffer)
   return tuple
 }
-func FindDelim(row []string) ([]int, int) {
+
+func findDelim(row []string) ([]int, int) {
   buffer := make([]int, len(row))
   max := 0
   for i, cell := range row { buffer[i] = len(strings.Split(cell, "\n")) ; max = int(math.Max( float64(buffer[i]), float64(max) )) }
   return buffer, max
 }
-func PlotRow(row []string, widths []int) {
-  _, max := FindDelim(row)
+
+func plotRow(row []string, widths []int) {
+  _, max := findDelim(row)
   for linenum:=0; linenum<max; linenum++ {
     fmt.Printf(" ║")
     for i, wid := range widths {
@@ -94,7 +97,8 @@ func PlotRow(row []string, widths []int) {
     }
   }
 }
-func MaxInCell(cell string) int {
+
+func maxInCell(cell string) int {
   lines, max := strings.Split(cell, "\n"), 0
   for _, each := range lines { max = int(math.Max( float64(max), float64(len(each)) )) }
   return max
