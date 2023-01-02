@@ -3,24 +3,13 @@ package main
 import (
   "fmt"
   "math"
-  "math/rand"
-  "crypto/sha512"
-  "encoding/binary"
+  // "math/rand"
+  // "crypto/sha512"
+  // "encoding/binary"
   "time"
   "rhymald/mag-delta/plot"
+  "rhymald/mag-delta/funcs"
 )
-
-type Dot struct {
-  Weight float64
-  Element string
-}
-
-type Stream struct {
-  Cre float64
-  Alt float64
-  Des float64
-  Element string
-}
 
 type Player struct {
   // Physical
@@ -30,10 +19,10 @@ type Player struct {
   }
   // Energetical
   Nature struct {
-    Stream Stream
+    Stream funcs.Stream
     Pool struct {
       Max float64
-      Dots []Dot
+      Dots []funcs.Dot
     }
   }
 }
@@ -57,6 +46,7 @@ func main() {
   for {
     fmt.Printf("Do: ")
     fmt.Scanln(&Action)
+    fmt.Print("\033[H\033[2J")
     PlayerStatus(You, Target)
   }
   return
@@ -71,13 +61,13 @@ func PlayerBorn(mean float64) Player {
   // current := fmt.Sprintf("Health|Current: %0.0f|Max: %0.0f|Rate: %1.0f%%", buffer.Health.Current, buffer.Health.Max, 100*buffer.Health.Current/buffer.Health.Max)
   current := fmt.Sprintf("Health|Max: %0.0f|Current: %0.0f|Rate: %1.0f%%", buffer.Health.Max, buffer.Health.Current, 100*buffer.Health.Current/buffer.Health.Max)
   playerTuple = plot.AddRow(current, playerTuple)
-  buffer.Nature.Stream.Cre  = 1+Rand()
-  buffer.Nature.Stream.Alt   = 1+Rand()
-  buffer.Nature.Stream.Des   = 1+Rand()
-  stabilizer := mean/Vector(buffer.Nature.Stream.Cre, buffer.Nature.Stream.Alt, buffer.Nature.Stream.Des)
+  buffer.Nature.Stream.Cre = 1+funcs.Rand()
+  buffer.Nature.Stream.Alt = 1+funcs.Rand()
+  buffer.Nature.Stream.Des = 1+funcs.Rand()
+  stabilizer := mean/funcs.Vector(buffer.Nature.Stream.Cre, buffer.Nature.Stream.Alt, buffer.Nature.Stream.Des)
   buffer.Nature.Stream.Cre *= stabilizer
-  buffer.Nature.Stream.Alt  *= stabilizer
-  buffer.Nature.Stream.Des  *= stabilizer
+  buffer.Nature.Stream.Alt *= stabilizer
+  buffer.Nature.Stream.Des *= stabilizer
   buffer.Nature.Stream.Element = "Common"
   // playerTuple = AddRow("Element|Creation|Alteration|Destruction",playerTuple)
   row := fmt.Sprintf(
@@ -103,13 +93,13 @@ func FoeSpawn(mean float64) Player {
   buffer.Health.Current = buffer.Health.Max //from db
   current := fmt.Sprintf("Health|||Rate: %1.0f%%", 100*buffer.Health.Current/buffer.Health.Max)
   playerTuple = plot.AddRow(current, playerTuple)
-  buffer.Nature.Stream.Cre  = 1+Rand()
-  buffer.Nature.Stream.Alt   = 1+Rand()
-  buffer.Nature.Stream.Des   = 1+Rand()
-  stabilizer := mean/Vector(buffer.Nature.Stream.Cre, buffer.Nature.Stream.Alt, buffer.Nature.Stream.Des)
+  buffer.Nature.Stream.Cre = 1+funcs.Rand()
+  buffer.Nature.Stream.Alt = 1+funcs.Rand()
+  buffer.Nature.Stream.Des = 1+funcs.Rand()
+  stabilizer := mean/funcs.Vector(buffer.Nature.Stream.Cre, buffer.Nature.Stream.Alt, buffer.Nature.Stream.Des)
   buffer.Nature.Stream.Cre *= stabilizer
-  buffer.Nature.Stream.Alt  *= stabilizer
-  buffer.Nature.Stream.Des  *= stabilizer
+  buffer.Nature.Stream.Alt *= stabilizer
+  buffer.Nature.Stream.Des *= stabilizer
   buffer.Nature.Stream.Element = "Common"
   // playerTuple = AddRow("Element|Creation|Alteration|Destruction",playerTuple)
   row := fmt.Sprintf(
@@ -172,25 +162,11 @@ func PlayerStatus(players ...Player) {
   plot.PlotTable(playerTuple, false)
 }
 
-func Rand() float64 {
-  x := (time.Now().UnixNano())
-  in_bytes := make([]byte, 8)
-  binary.LittleEndian.PutUint64(in_bytes, uint64(x))
-  hsum := sha512.Sum512(in_bytes)
-  sum  := binary.BigEndian.Uint64(hsum[:])
-  return rand.New(rand.NewSource( int64(sum) )).Float64()
-}
-func Vector(props ...float64) float64 {
-  sum := 0.0
-  for _, each := range props { sum += each*each }
-  return math.Sqrt(sum)
-}
-
-func Regeneration(pool *[]Dot, health *float64, max float64, maxhp float64, stream Stream) {
+func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64, stream funcs.Stream) {
   for {
     if max-float64(len(*pool))<1  { time.Sleep( time.Millisecond * time.Duration( 4096 )) ; return }
-    weight := math.Pow( math.Log2( 1+Vector(stream.Cre,stream.Des,stream.Alt) ), 2)
-    dot := Dot{ Element: stream.Element, Weight: weight }
+    weight := math.Pow( math.Log2( 1+funcs.Vector(stream.Cre,stream.Des,stream.Alt) ), 2)
+    dot := funcs.Dot{ Element: stream.Element, Weight: weight }
     pause := 1024
     heal := 1.0
     time.Sleep( time.Millisecond * time.Duration( pause ))
