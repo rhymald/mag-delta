@@ -17,6 +17,7 @@ type Player struct {
   }
   // Energetical
   Nature struct {
+    Resistance float64
     Stream funcs.Stream
     Pool struct {
       Max float64
@@ -31,7 +32,7 @@ var Action string
 
 func init() {
   fmt.Println("[Initializing...]")
-  You = PlayerBorn(0)
+  You = PlayerBorn(1)
   Target = FoeSpawn(1)
   go func(){
     go func(){ Regeneration(&You.Nature.Pool.Dots, &You.Health.Current, You.Nature.Pool.Max, You.Health.Max, You.Nature.Stream) }()
@@ -56,9 +57,9 @@ func Jinx(caster *Player, target *Player) {
   for i:=0.0; i<float64(dotsForConsume); i+=1 {
     if len(*&caster.Nature.Pool.Dots) == 0 {break}
     _, w := MinusDot(&(*&caster.Nature.Pool.Dots))
-    damage += w + caster.Nature.Stream.Des
+    damage += w
   }
-  *&target.Health.Current += -damage
+  *&target.Health.Current += -damage*caster.Nature.Stream.Des/target.Nature.Resistance
   if *&target.Health.Current < 0 { *&target.Health.Current = 0 }
 }
 func MinusDot(pool *[]funcs.Dot) (string, float64) {
@@ -88,12 +89,15 @@ func PlayerBorn(mean float64) Player {
   buffer.Nature.Stream.Alt *= stabilizer
   buffer.Nature.Stream.Des *= stabilizer
   buffer.Nature.Stream.Element = "Common"
+  buffer.Nature.Resistance = 3 / (1/buffer.Nature.Stream.Cre + 1/buffer.Nature.Stream.Alt + 1/buffer.Nature.Stream.Des)
   row := fmt.Sprintf(
-    "Element\n%s|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f",
+    "Element\n%s|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f|Resistance\n%0.3f",
+    // "Element\n%s|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f",
     buffer.Nature.Stream.Element,
     buffer.Nature.Stream.Cre,
     buffer.Nature.Stream.Alt,
     buffer.Nature.Stream.Des,
+    buffer.Nature.Resistance,
   )
   playerTuple = plot.AddRow(row,playerTuple)
   thickness := math.Pi / ( 1/buffer.Nature.Stream.Des + 1/buffer.Nature.Stream.Alt + 1/buffer.Nature.Stream.Cre)
@@ -120,12 +124,14 @@ func FoeSpawn(mean float64) Player {
   buffer.Nature.Stream.Alt *= stabilizer
   buffer.Nature.Stream.Des *= stabilizer
   buffer.Nature.Stream.Element = "Common"
+  buffer.Nature.Resistance = 3 / (1/buffer.Nature.Stream.Cre + 1/buffer.Nature.Stream.Alt + 1/buffer.Nature.Stream.Des)
   row := fmt.Sprintf(
-    "Element\n%s|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f",
+    "Element\n%s|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f|Resistance\n%0.3f",
     buffer.Nature.Stream.Element,
     math.Sqrt(mean*mean/3),
     math.Sqrt(mean*mean/3),
     math.Sqrt(mean*mean/3),
+    buffer.Nature.Resistance,
   )
   playerTuple = plot.AddRow(row,playerTuple)
   buffer.Nature.Pool.Max = math.Sqrt(buffer.Nature.Stream.Cre*1024 + 1024) - 1
@@ -148,7 +154,7 @@ func PlayerStatus(players ...Player) {
   playerTuple = plot.AddRow(line, playerTuple)
   if compare {
     line = fmt.Sprintf(
-      " \n %s \n[%s]|Creation\n  %0.3f \n [%0.3f]|Alteration\n  %0.3f \n [%0.3f]|Destruction\n  %0.3f \n [%0.3f]",
+      " \n %s \n[%s]|Creation\n  %0.3f \n [%0.3f]|Alteration\n  %0.3f \n [%0.3f]|Destruction\n  %0.3f \n [%0.3f]|Resistance\n  %0.3f \n [%0.3f]",
       it.Nature.Stream.Element,
       foe.Nature.Stream.Element,
       it.Nature.Stream.Cre,
@@ -157,6 +163,8 @@ func PlayerStatus(players ...Player) {
       foe.Nature.Stream.Alt,
       it.Nature.Stream.Des,
       foe.Nature.Stream.Des,
+      it.Nature.Resistance,
+      foe.Nature.Resistance,
     )
   } else {
     line = fmt.Sprintf(
