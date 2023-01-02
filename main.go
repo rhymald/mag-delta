@@ -3,7 +3,7 @@ package main
 import (
   "fmt"
   "math"
-  // "math/rand"
+  "math/rand"
   // "crypto/sha512"
   // "encoding/binary"
   "time"
@@ -34,22 +34,43 @@ var Action string
 func init() {
   fmt.Println("[Initializing...]")
   You = PlayerBorn(1)
+  Target = FoeSpawn(4)
   go func(){
     go func(){ Regeneration(&You.Nature.Pool.Dots, &You.Health.Current, You.Nature.Pool.Max, You.Health.Max, You.Nature.Stream) }()
+    go func(){ Negeneration(&Target.Health.Current, Target.Health.Max, Target.Nature.Stream) }()
   }()
-  return
 }
 
 func main() {
   fmt.Println("[Go!..]")
-  Target = FoeSpawn(4)
   for {
     fmt.Printf("Do: ")
     fmt.Scanln(&Action)
     fmt.Print("\033[H\033[2J")
+    if Action=="a" {Jinx(&You, &Target) ; Action = ""}
     PlayerStatus(You, Target)
   }
-  return
+}
+
+func Jinx(caster *Player, target *Player) {
+  damage := 0.0
+  dotsForConsume := int(*&caster.Nature.Pool.Max / (math.Pi + *&caster.Nature.Stream.Cre))
+  for i:=0.0; i<float64(dotsForConsume); i+=1 {
+    if len(*&caster.Nature.Pool.Dots) == 0 {break}
+    _, w := MinusDot(&(*&caster.Nature.Pool.Dots))
+    damage += w + caster.Nature.Stream.Des
+  }
+  *&target.Health.Current += -damage
+  if *&target.Health.Current < 0 { *&target.Health.Current = 0 }
+}
+func MinusDot(pool *[]funcs.Dot) (string, float64) {
+  index := rand.New(rand.NewSource(time.Now().UnixNano())).Intn( len(*pool) )
+  buffer := *pool
+  ddelement := buffer[index].Element
+  ddweight := buffer[index].Weight
+  buffer[index] = buffer[len(buffer)-1]
+  *pool = buffer[:len(buffer)-1]
+  return ddelement, ddweight
 }
 
 func PlayerBorn(mean float64) Player {
@@ -164,15 +185,32 @@ func PlayerStatus(players ...Player) {
 
 func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64, stream funcs.Stream) {
   for {
-    if max-float64(len(*pool))<1  { time.Sleep( time.Millisecond * time.Duration( 4096 )) ; return }
-    weight := math.Pow( math.Log2( 1+funcs.Vector(stream.Cre,stream.Des,stream.Alt) ), 2)
-    dot := funcs.Dot{ Element: stream.Element, Weight: weight }
-    pause := 1024
+    if max-float64(len(*pool))<1 { time.Sleep( time.Millisecond * time.Duration( 4096 )) } else {
+      weight := math.Pow( math.Log2( 1+funcs.Vector(stream.Cre,stream.Des,stream.Alt) ), 2)
+      dot := funcs.Dot{ Element: stream.Element, Weight: weight*(funcs.Rand()*0.5+0.75) }
+      pause := 256
+      heal := 1.0
+      time.Sleep( time.Millisecond * time.Duration( pause ))
+      //block
+      *pool = append(*pool, dot )
+      if *health <= 0 { fmt.Println("YOU ARE DEAD") ; break }
+      if *health < maxhp { *health += heal } else { *health = maxhp }
+      //unblock
+    }
+  }
+}
+
+func Negeneration(health *float64, maxhp float64, stream funcs.Stream) {
+  for {
+    // weight := math.Pow( math.Log2( 1+funcs.Vector(stream.Cre,stream.Des,stream.Alt) ), 2)-1
+    // dot := funcs.Dot{ Element: stream.Element, Weight: weight*(funcs.Rand()*0.5+0.75) }
+    pause := 2048
     heal := 1.0
-    time.Sleep( time.Millisecond * time.Duration( pause ))
     //block
-    *pool = append(*pool, dot )
-    if *health < maxhp { *health += heal }
+    // *pool = append(*pool, dot )
+    if *health <= 0 { fmt.Println("Foe is DEAD") ; break }
+    if *health < maxhp { *health += heal } else { *health = maxhp }
     //unblock
+    time.Sleep( time.Millisecond * time.Duration( pause ))
   }
 }
