@@ -31,8 +31,8 @@ var Action string
 
 func init() {
   fmt.Println("[Initializing...]")
-  You = PlayerBorn(8)
-  Target = FoeSpawn(13)
+  You = PlayerBorn(0)
+  Target = FoeSpawn(1)
   go func(){
     go func(){ Regeneration(&You.Nature.Pool.Dots, &You.Health.Current, You.Nature.Pool.Max, You.Health.Max, You.Nature.Stream) }()
     go func(){ Negeneration(&Target.Health.Current, Target.Health.Max, Target.Nature.Stream) }()
@@ -72,6 +72,7 @@ func MinusDot(pool *[]funcs.Dot) (string, float64) {
 }
 
 func PlayerBorn(mean float64) Player {
+  mean += math.Sqrt(3)
   playerTuple := [][]string{}
   buffer := Player{}
   fmt.Println("Player creation start:")
@@ -103,6 +104,7 @@ func PlayerBorn(mean float64) Player {
 }
 
 func FoeSpawn(mean float64) Player {
+  mean += math.Sqrt(3)
   playerTuple := [][]string{}
   buffer := Player{}
   fmt.Println("Foe spawning start:")
@@ -139,14 +141,14 @@ func PlayerStatus(players ...Player) {
   fmt.Println("Player status [comparing to a foe]:")
   line := ""
   if compare {
-    line = fmt.Sprintf("Health|Max: %0.0f|Current: %0.0f|Rate: %3.0f%%\n  [%3.0f%%]", it.Health.Max, it.Health.Current, 100*it.Health.Current/it.Health.Max,100*foe.Health.Current/foe.Health.Max)
+    line = fmt.Sprintf("Health|Max: %0.0f|Current: %0.0f|Rate: %3.0f%%|[%3.0f%%]", it.Health.Max, it.Health.Current, 100*it.Health.Current/it.Health.Max,100*foe.Health.Current/foe.Health.Max)
   } else {
     line = fmt.Sprintf("Health|Max: %0.0f|Current: %0.0f|Rate: %1.0f%%", it.Health.Max, it.Health.Current, 100*it.Health.Current/it.Health.Max)
   }
   playerTuple = plot.AddRow(line, playerTuple)
   if compare {
     line = fmt.Sprintf(
-      " \n %s \n[%s]|Creation\n %0.3f \n[%0.3f]|Alteration\n %0.3f \n[%0.3f]|Destruction\n %0.3f \n[%0.3f]",
+      " \n %s \n[%s]|Creation\n  %0.3f \n [%0.3f]|Alteration\n  %0.3f \n [%0.3f]|Destruction\n  %0.3f \n [%0.3f]",
       it.Nature.Stream.Element,
       foe.Nature.Stream.Element,
       it.Nature.Stream.Cre,
@@ -167,7 +169,7 @@ func PlayerStatus(players ...Player) {
   }
   playerTuple = plot.AddRow(line,playerTuple)
   if compare {
-    line = fmt.Sprintf("Pool|Max: %0.0f\n  [%0.0f]|Current: %d|Rate: %1.0f%%", it.Nature.Pool.Max, foe.Nature.Pool.Max, len(it.Nature.Pool.Dots), 100*float64(len(it.Nature.Pool.Dots))/float64(it.Nature.Pool.Max) )
+    line = fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%|[%0.0f]", it.Nature.Pool.Max, len(it.Nature.Pool.Dots), 100*float64(len(it.Nature.Pool.Dots))/float64(it.Nature.Pool.Max), foe.Nature.Pool.Max )
   } else {
     line = fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", it.Nature.Pool.Max, len(it.Nature.Pool.Dots), 100*float64(len(it.Nature.Pool.Dots))/float64(it.Nature.Pool.Max) )
   }

@@ -63,9 +63,10 @@ func AddRow(row string, tuple [][]string) [][]string {
   buffer := strings.Split(row, "|")
   if len(tuple)==0 { return [][]string{buffer} }
   if len(buffer) > len(tuple[0]) {
-    for l, _ := range tuple { for count := 0; count < len(buffer)-len(tuple[0]); count++ { tuple[l] = append(tuple[l], " ") } }
-  } else if len(buffer) < len(tuple[0]) {
-    for count := 0; count <= len(tuple[0])-len(buffer); count++ { buffer = append(buffer, " ") }
+    for l, _ := range tuple { for { if len(buffer) == len(tuple[0]) {break} ; tuple[l] = append(tuple[l], " ") } }
+  }
+  if len(buffer) < len(tuple[0])  {
+    for { if len(buffer) == len(tuple[0]) {break} ; buffer = append(buffer, " ") }
   }
   tuple = append(tuple, buffer)
   return tuple
@@ -84,8 +85,9 @@ func plotRow(row []string, widths []int) {
     fmt.Printf(" ║")
     for i, wid := range widths {
       fmt.Printf(" ")
-      cell := strings.Split(row[i], "\n")
-      if len(cell) < max { for count:=0; count<max-len(cell); count++ { cell = append(cell, string(" ")) } }
+      cell := []string{" "}
+      if row[i] != " " {cell = strings.Split(row[i], "\n")}
+      if len(cell) < max { for { if max == len(cell) {break} ; cell = append(cell, string(" ")) } }
       toprint := cell[linenum]
       fmt.Printf("%s", toprint)
       for counter:=0 ;counter < wid-1-len(toprint); counter++ {
