@@ -3,10 +3,8 @@ package main
 import (
   "fmt"
   "math"
-  "math/rand"
-  // "crypto/sha512"
-  // "encoding/binary"
   "time"
+  "math/rand"
   "rhymald/mag-delta/plot"
   "rhymald/mag-delta/funcs"
 )
@@ -33,8 +31,8 @@ var Action string
 
 func init() {
   fmt.Println("[Initializing...]")
-  You = PlayerBorn(1)
-  Target = FoeSpawn(4)
+  You = PlayerBorn(8)
+  Target = FoeSpawn(13)
   go func(){
     go func(){ Regeneration(&You.Nature.Pool.Dots, &You.Health.Current, You.Nature.Pool.Max, You.Health.Max, You.Nature.Stream) }()
     go func(){ Negeneration(&Target.Health.Current, Target.Health.Max, Target.Nature.Stream) }()
@@ -79,7 +77,6 @@ func PlayerBorn(mean float64) Player {
   fmt.Println("Player creation start:")
   buffer.Health.Max = (mean/10+1)*(mean/10+1)*50 // from db
   buffer.Health.Current = math.Sqrt(buffer.Health.Max+1)-1 //from db
-  // current := fmt.Sprintf("Health|Current: %0.0f|Max: %0.0f|Rate: %1.0f%%", buffer.Health.Current, buffer.Health.Max, 100*buffer.Health.Current/buffer.Health.Max)
   current := fmt.Sprintf("Health|Max: %0.0f|Current: %0.0f|Rate: %1.0f%%", buffer.Health.Max, buffer.Health.Current, 100*buffer.Health.Current/buffer.Health.Max)
   playerTuple = plot.AddRow(current, playerTuple)
   buffer.Nature.Stream.Cre = 1+funcs.Rand()
@@ -90,7 +87,6 @@ func PlayerBorn(mean float64) Player {
   buffer.Nature.Stream.Alt *= stabilizer
   buffer.Nature.Stream.Des *= stabilizer
   buffer.Nature.Stream.Element = "Common"
-  // playerTuple = AddRow("Element|Creation|Alteration|Destruction",playerTuple)
   row := fmt.Sprintf(
     "Element\n%s|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f",
     buffer.Nature.Stream.Element,
@@ -110,7 +106,7 @@ func FoeSpawn(mean float64) Player {
   playerTuple := [][]string{}
   buffer := Player{}
   fmt.Println("Foe spawning start:")
-  buffer.Health.Max = (mean/100+1)*(mean/100+1)*50 // from db
+  buffer.Health.Max = (mean/10+1)*(mean/10+1)*50 // from db
   buffer.Health.Current = buffer.Health.Max //from db
   current := fmt.Sprintf("Health|||Rate: %1.0f%%", 100*buffer.Health.Current/buffer.Health.Max)
   playerTuple = plot.AddRow(current, playerTuple)
@@ -122,16 +118,12 @@ func FoeSpawn(mean float64) Player {
   buffer.Nature.Stream.Alt *= stabilizer
   buffer.Nature.Stream.Des *= stabilizer
   buffer.Nature.Stream.Element = "Common"
-  // playerTuple = AddRow("Element|Creation|Alteration|Destruction",playerTuple)
   row := fmt.Sprintf(
     "Element\n%s|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f",
     buffer.Nature.Stream.Element,
     math.Sqrt(mean*mean/3),
     math.Sqrt(mean*mean/3),
     math.Sqrt(mean*mean/3),
-    // buffer.Nature.Stream.Length,
-    // buffer.Nature.Stream.Width,
-    // buffer.Nature.Stream.Power,
   )
   playerTuple = plot.AddRow(row,playerTuple)
   buffer.Nature.Pool.Max = math.Sqrt(buffer.Nature.Stream.Cre*1024 + 1024) - 1
@@ -188,7 +180,7 @@ func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64
     if max-float64(len(*pool))<1 { time.Sleep( time.Millisecond * time.Duration( 4096 )) } else {
       weight := math.Pow( math.Log2( 1+funcs.Vector(stream.Cre,stream.Des,stream.Alt) ), 2)
       dot := funcs.Dot{ Element: stream.Element, Weight: weight*(funcs.Rand()*0.5+0.75) }
-      pause := 256
+      pause := 256.0
       heal := 1.0
       time.Sleep( time.Millisecond * time.Duration( pause ))
       //block
@@ -202,15 +194,12 @@ func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64
 
 func Negeneration(health *float64, maxhp float64, stream funcs.Stream) {
   for {
-    // weight := math.Pow( math.Log2( 1+funcs.Vector(stream.Cre,stream.Des,stream.Alt) ), 2)-1
-    // dot := funcs.Dot{ Element: stream.Element, Weight: weight*(funcs.Rand()*0.5+0.75) }
-    pause := 2048
+    pause := 256.0
     heal := 1.0
     //block
-    // *pool = append(*pool, dot )
-    if *health <= 0 { fmt.Println("Foe is DEAD") ; break }
+    time.Sleep( time.Millisecond * time.Duration( pause ))
+    if *health <= 0 { fmt.Printf("[Hint: Foe is DEAD] ") ; break }
     if *health < maxhp { *health += heal } else { *health = maxhp }
     //unblock
-    time.Sleep( time.Millisecond * time.Duration( pause ))
   }
 }
