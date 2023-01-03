@@ -32,35 +32,43 @@ var Action string
 
 func init() {
   fmt.Println("[Initializing...]")
-  You = PlayerBorn(1)
-  Target = FoeSpawn(1)
-  go func(){
-    go func(){ Regeneration(&You.Nature.Pool.Dots, &You.Health.Current, You.Nature.Pool.Max, You.Health.Max, You.Nature.Stream) }()
-    go func(){ Negeneration(&Target.Health.Current, Target.Health.Max, Target.Nature.Stream) }()
-  }()
+  PlayerBorn(&You,0)
+  FoeSpawn(&Target,0)
+  // go func(){
+  //   go func(){ Regeneration(&You.Nature.Pool.Dots, &You.Health.Current, You.Nature.Pool.Max, You.Health.Max, You.Nature.Stream) }()
+  //   go func(){ Negeneration(&Target.Health.Current, Target.Health.Max, Target.Nature.Stream) }()
+  // }()
 }
 
 func main() {
   fmt.Println("[Go!..]")
+  grow := 0.0
   for {
     fmt.Printf("Do: ")
     fmt.Scanln(&Action)
+    if Action=="a" { Jinx(&You, &Target) ; Action = "" }
     fmt.Print("\033[H\033[2J")
-    if Action=="a" {Jinx(&You, &Target) ; Action = ""}
     PlayerStatus(You, Target)
+    if Target.Health.Current == 0 { grow += 1 ; FoeSpawn(&Target, grow) }
   }
 }
 
 func Jinx(caster *Player, target *Player) {
   damage := 0.0
   dotsForConsume := int(*&caster.Nature.Pool.Max / (math.Pi + *&caster.Nature.Stream.Cre))
+  pause := 1024 / float64(dotsForConsume)
+  reach := 1024.0 // between
   for i:=0.0; i<float64(dotsForConsume); i+=1 {
     if len(*&caster.Nature.Pool.Dots) == 0 {break}
     _, w := MinusDot(&(*&caster.Nature.Pool.Dots))
     damage += w
+    time.Sleep( time.Millisecond * time.Duration( pause ))
   }
-  *&target.Health.Current += -damage*caster.Nature.Stream.Des/target.Nature.Resistance
-  if *&target.Health.Current < 0 { *&target.Health.Current = 0 }
+  go func(){
+    time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
+    *&target.Health.Current += -damage*caster.Nature.Stream.Des/target.Nature.Resistance
+    if *&target.Health.Current < 0 { *&target.Health.Current = 0 }
+  }()
 }
 func MinusDot(pool *[]funcs.Dot) (string, float64) {
   index := rand.New(rand.NewSource(time.Now().UnixNano())).Intn( len(*pool) )
@@ -72,7 +80,7 @@ func MinusDot(pool *[]funcs.Dot) (string, float64) {
   return ddelement, ddweight
 }
 
-func PlayerBorn(mean float64) Player {
+func PlayerBorn(player *Player, mean float64){
   mean += math.Sqrt(3)
   playerTuple := [][]string{}
   buffer := Player{}
@@ -104,10 +112,14 @@ func PlayerBorn(mean float64) Player {
   buffer.Nature.Pool.Max = math.Sqrt( thickness *1024 + 1024) - 1
   playerTuple = plot.AddRow( fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", buffer.Nature.Pool.Max, len(buffer.Nature.Pool.Dots), 100*float64(len(buffer.Nature.Pool.Dots))/float64(buffer.Nature.Pool.Max) ) ,playerTuple)
   plot.PlotTable(playerTuple, false)
-  return buffer
+  *player = buffer
+  go func(){
+    go func(){ Regeneration(&(*&player.Nature.Pool.Dots), &(*&player.Health.Current), *&player.Nature.Pool.Max, *&player.Health.Max, *&player.Nature.Stream) }()
+    // go func(){ Negeneration(&Target.Health.Current, Target.Health.Max, Target.Nature.Stream) }()
+  }()
 }
 
-func FoeSpawn(mean float64) Player {
+func FoeSpawn(foe *Player, mean float64) {
   mean += math.Sqrt(3)
   playerTuple := [][]string{}
   buffer := Player{}
@@ -137,7 +149,11 @@ func FoeSpawn(mean float64) Player {
   buffer.Nature.Pool.Max = math.Sqrt(buffer.Nature.Stream.Cre*1024 + 1024) - 1
   playerTuple = plot.AddRow( fmt.Sprintf("Pool|Max: %0.0f", buffer.Nature.Pool.Max ) ,playerTuple)
   plot.PlotTable(playerTuple, false)
-  return buffer
+  *foe = buffer
+  go func(){
+    // go func(){ Regeneration(&You.Nature.Pool.Dots, &You.Health.Current, You.Nature.Pool.Max, You.Health.Max, You.Nature.Stream) }()
+    go func(){ Negeneration(&(*&foe.Health.Current), *&foe.Health.Max, *&foe.Nature.Stream) }()
+  }()
 }
 
 func PlayerStatus(players ...Player) {
