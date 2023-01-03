@@ -31,23 +31,24 @@ var Target Player
 var Action string
 
 func init() {
-  fmt.Println("[Initializing...]")
+  fmt.Printf("░▒▓█%sInitializing...%s█▓▒░\n",plot.R,plot.E[0])
+  // for i:=1;i<9;i++ {
+  // }
   PlayerBorn(&You,0)
   FoeSpawn(&Target,0)
-  // go func(){
-  //   go func(){ Regeneration(&You.Nature.Pool.Dots, &You.Health.Current, You.Nature.Pool.Max, You.Health.Max, You.Nature.Stream) }()
-  //   go func(){ Negeneration(&Target.Health.Current, Target.Health.Max, Target.Nature.Stream) }()
-  // }()
 }
 
 func main() {
   fmt.Println("[Go!..]")
   grow := 0.0
   for {
-    fmt.Printf("Do: ")
+    // fmt.Print("\033[H\033[2J")
+    PlayerStatus(You, Target)
+
+    // fmt.Printf("Do: \n")
     fmt.Scanln(&Action)
     if Action=="a" { Jinx(&You, &Target) ; Action = "" }
-    fmt.Print("\033[H\033[2J")
+
     PlayerStatus(You, Target)
     if Target.Health.Current == 0 { grow += 1 ; FoeSpawn(&Target, grow) }
   }
@@ -58,15 +59,18 @@ func Jinx(caster *Player, target *Player) {
   dotsForConsume := int(*&caster.Nature.Pool.Max / (math.Pi + *&caster.Nature.Stream.Cre))
   pause := 1024 / float64(dotsForConsume)
   reach := 1024.0 // between
+  fmt.Printf("█▓▒░ DEBUG[Cast][Jinx]: %v needs %d dots \n", caster, dotsForConsume)
   for i:=0.0; i<float64(dotsForConsume); i+=1 {
-    if len(*&caster.Nature.Pool.Dots) == 0 {break}
+    if len(*&caster.Nature.Pool.Dots) == 0 { fmt.Printf("█▓▒░ DEBUG[Cast][Jinx]: Out of energy\n") ; break}
     _, w := MinusDot(&(*&caster.Nature.Pool.Dots))
     damage += w
     time.Sleep( time.Millisecond * time.Duration( pause ))
   }
+  fmt.Printf("█▓▒░ DEBUG[Cast][Jinx]: %0.1f damage sent\n", damage)
   go func(){
     time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
     *&target.Health.Current += -damage*caster.Nature.Stream.Des/target.Nature.Resistance
+    fmt.Printf("█▓▒░ DEBUG[Cast][Jinx]: %0.1f damage received\n", damage*caster.Nature.Stream.Des/target.Nature.Resistance)
     if *&target.Health.Current < 0 { *&target.Health.Current = 0 }
   }()
 }
@@ -113,10 +117,7 @@ func PlayerBorn(player *Player, mean float64){
   playerTuple = plot.AddRow( fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", buffer.Nature.Pool.Max, len(buffer.Nature.Pool.Dots), 100*float64(len(buffer.Nature.Pool.Dots))/float64(buffer.Nature.Pool.Max) ) ,playerTuple)
   plot.PlotTable(playerTuple, false)
   *player = buffer
-  go func(){
-    go func(){ Regeneration(&(*&player.Nature.Pool.Dots), &(*&player.Health.Current), *&player.Nature.Pool.Max, *&player.Health.Max, *&player.Nature.Stream) }()
-    // go func(){ Negeneration(&Target.Health.Current, Target.Health.Max, Target.Nature.Stream) }()
-  }()
+  go func(){ Regeneration(&(*&player.Nature.Pool.Dots), &(*&player.Health.Current), *&player.Nature.Pool.Max, *&player.Health.Max, *&player.Nature.Stream) }()
 }
 
 func FoeSpawn(foe *Player, mean float64) {
@@ -150,14 +151,12 @@ func FoeSpawn(foe *Player, mean float64) {
   playerTuple = plot.AddRow( fmt.Sprintf("Pool|Max: %0.0f", buffer.Nature.Pool.Max ) ,playerTuple)
   plot.PlotTable(playerTuple, false)
   *foe = buffer
-  go func(){
-    // go func(){ Regeneration(&You.Nature.Pool.Dots, &You.Health.Current, You.Nature.Pool.Max, You.Health.Max, You.Nature.Stream) }()
-    go func(){ Negeneration(&(*&foe.Health.Current), *&foe.Health.Max, *&foe.Nature.Stream) }()
-  }()
+  go func(){ Negeneration(&(*&foe.Health.Current), *&foe.Health.Max, *&foe.Nature.Stream) }()
 }
 
 func PlayerStatus(players ...Player) {
   it, foe, compare := players[0], Player{}, len(players) > 1
+  if players[1].Health.Current <= 0 { compare = false }
   if compare { foe = players[1] }
   playerTuple := [][]string{}
   fmt.Println("Player status [comparing to a foe]:")
@@ -211,7 +210,7 @@ func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64
       time.Sleep( time.Millisecond * time.Duration( pause ))
       //block
       *pool = append(*pool, dot )
-      if *health <= 0 { fmt.Println("YOU ARE DEAD") ; break }
+      if *health <= 0 { fmt.Println("█▓▒░ FATAL[Player][Regeneration]: YOU ARE DEAD") ; break }
       if *health < maxhp { *health += heal } else { *health = maxhp }
       //unblock
     }
@@ -224,7 +223,7 @@ func Negeneration(health *float64, maxhp float64, stream funcs.Stream) {
     heal := 1.0
     //block
     time.Sleep( time.Millisecond * time.Duration( pause ))
-    if *health <= 0 { fmt.Printf("[Hint: Foe is DEAD] ") ; break }
+    if *health <= 0 { fmt.Printf("█▓▒░ DEBUG[Fee][Regeneration]: Foe died\n") ; break }
     if *health < maxhp { *health += heal } else { *health = maxhp }
     //unblock
   }
