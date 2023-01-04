@@ -7,7 +7,7 @@ import(
   "golang.org/x/term"
 )
 
-func PlotTable(tuple [][]string, stretch bool) {
+func Table(tuple [][]string, stretch bool) {
   // tuple := tuple
   maxs := make([]int, len(tuple[0]))
   for j, y := range tuple {
@@ -104,4 +104,8 @@ func maxInCell(cell string) int {
   lines, max := strings.Split(cell, "\n"), 0
   for _, each := range lines { max = int(math.Max( float64(max), float64(len(each)) )) }
   return max
+}
+
+func Bar(text string) {
+  fmt.Printf("░▒▓█%s%42s%s█▓▒░\n",R,text,E[0])
 }

@@ -7,6 +7,9 @@ import (
   "math/rand"
   "rhymald/mag-delta/plot"
   "rhymald/mag-delta/funcs"
+  "os"
+  "os/exec"
+  // "github.com/rhymald/mag-gamma"
 )
 
 type Player struct {
@@ -29,16 +32,17 @@ type Player struct {
 var You Player
 var Target Player
 var Action string
+var Keys chan string = make(chan string)
+
 
 func init() {
-  fmt.Printf("░▒▓█%sInitializing...%s█▓▒░\n",plot.R,plot.E[0])
-  // for i:=1;i<9;i++ {
-  // }
+  plot.Bar("Initializing...    ")
   PlayerBorn(&You,0)
   FoeSpawn(&Target,0)
 }
 
 func main() {
+  KeyListener(Keys)
   fmt.Println("[Go!..]")
   grow := 0.0
   for {
@@ -53,6 +57,10 @@ func main() {
     if Target.Health.Current == 0 { grow += 1 ; FoeSpawn(&Target, grow) }
   }
 }
+
+// ███████████████████
+// █▓▒░server side░▒▓█
+// ███████████████████
 
 func Jinx(caster *Player, target *Player) {
   damage := 0.0
@@ -115,7 +123,7 @@ func PlayerBorn(player *Player, mean float64){
   thickness := math.Pi / ( 1/buffer.Nature.Stream.Des + 1/buffer.Nature.Stream.Alt + 1/buffer.Nature.Stream.Cre)
   buffer.Nature.Pool.Max = math.Sqrt( thickness *1024 + 1024) - 1
   playerTuple = plot.AddRow( fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", buffer.Nature.Pool.Max, len(buffer.Nature.Pool.Dots), 100*float64(len(buffer.Nature.Pool.Dots))/float64(buffer.Nature.Pool.Max) ) ,playerTuple)
-  plot.PlotTable(playerTuple, false)
+  plot.Table(playerTuple, false)
   *player = buffer
   go func(){ Regeneration(&(*&player.Nature.Pool.Dots), &(*&player.Health.Current), *&player.Nature.Pool.Max, *&player.Health.Max, *&player.Nature.Stream) }()
 }
@@ -149,9 +157,64 @@ func FoeSpawn(foe *Player, mean float64) {
   playerTuple = plot.AddRow(row,playerTuple)
   buffer.Nature.Pool.Max = math.Sqrt(buffer.Nature.Stream.Cre*1024 + 1024) - 1
   playerTuple = plot.AddRow( fmt.Sprintf("Pool|Max: %0.0f", buffer.Nature.Pool.Max ) ,playerTuple)
-  plot.PlotTable(playerTuple, false)
+  plot.Table(playerTuple, false)
   *foe = buffer
   go func(){ Negeneration(&(*&foe.Health.Current), *&foe.Health.Max, *&foe.Nature.Stream) }()
+}
+
+func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64, stream funcs.Stream) {
+  for {
+    if max-float64(len(*pool))<1 { time.Sleep( time.Millisecond * time.Duration( 4096 )) } else {
+      weight := math.Pow( math.Log2( 1+funcs.Vector(stream.Cre,stream.Des,stream.Alt) ), 2)
+      dot := funcs.Dot{ Element: stream.Element, Weight: weight*(funcs.Rand()*0.5+0.75) }
+      pause := 256.0
+      heal := 1.0
+      time.Sleep( time.Millisecond * time.Duration( pause ))
+      //block
+      *pool = append(*pool, dot )
+      if *health <= 0 { fmt.Println("█▓▒░ FATAL[Player][Regeneration]: YOU ARE DEAD") ; break }
+      if *health < maxhp { *health += heal } else { *health = maxhp }
+      //unblock
+    }
+  }
+}
+
+func Negeneration(health *float64, maxhp float64, stream funcs.Stream) {
+  for {
+    pause := 256.0
+    heal := 1.0
+    //block
+    time.Sleep( time.Millisecond * time.Duration( pause ))
+    if *health <= 0 { fmt.Printf("█▓▒░ DEBUG[Fee][Regeneration]: Foe died\n") ; break }
+    if *health < maxhp { *health += heal } else { *health = maxhp }
+    //unblock
+  }
+}
+
+// ███████████████████
+// █▓▒░client side░▒▓█
+// ███████████████████
+
+func KeyListener(Keys chan string) {
+  // Keys := make(chan string)
+  go func(Keys chan string) {
+    // disable input buffering
+    exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
+    // do not display entered characters on the screen
+    exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
+    var b = make([]byte, 1)
+    for {
+      os.Stdin.Read(b)
+      Keys <- string(b)
+    }
+  }(Keys)
+  for {
+    stdin, _ := <-Keys
+    fmt.Print("\033[H\033[2J")
+    fmt.Println("█▓▒░ DEBUG[Keys pressed]:", stdin)
+    PlayerStatus(You, Target)
+    time.Sleep( time.Millisecond * time.Duration( 1 ))
+  }
 }
 
 func PlayerStatus(players ...Player) {
@@ -197,34 +260,5 @@ func PlayerStatus(players ...Player) {
     line = fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", it.Nature.Pool.Max, len(it.Nature.Pool.Dots), 100*float64(len(it.Nature.Pool.Dots))/float64(it.Nature.Pool.Max) )
   }
   playerTuple = plot.AddRow(line,playerTuple)
-  plot.PlotTable(playerTuple, false)
-}
-
-func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64, stream funcs.Stream) {
-  for {
-    if max-float64(len(*pool))<1 { time.Sleep( time.Millisecond * time.Duration( 4096 )) } else {
-      weight := math.Pow( math.Log2( 1+funcs.Vector(stream.Cre,stream.Des,stream.Alt) ), 2)
-      dot := funcs.Dot{ Element: stream.Element, Weight: weight*(funcs.Rand()*0.5+0.75) }
-      pause := 256.0
-      heal := 1.0
-      time.Sleep( time.Millisecond * time.Duration( pause ))
-      //block
-      *pool = append(*pool, dot )
-      if *health <= 0 { fmt.Println("█▓▒░ FATAL[Player][Regeneration]: YOU ARE DEAD") ; break }
-      if *health < maxhp { *health += heal } else { *health = maxhp }
-      //unblock
-    }
-  }
-}
-
-func Negeneration(health *float64, maxhp float64, stream funcs.Stream) {
-  for {
-    pause := 256.0
-    heal := 1.0
-    //block
-    time.Sleep( time.Millisecond * time.Duration( pause ))
-    if *health <= 0 { fmt.Printf("█▓▒░ DEBUG[Fee][Regeneration]: Foe died\n") ; break }
-    if *health < maxhp { *health += heal } else { *health = maxhp }
-    //unblock
-  }
+  plot.Table(playerTuple, false)
 }
