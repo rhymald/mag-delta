@@ -47,13 +47,14 @@ func main() {
   grow := 0.0
   for {
     // fmt.Print("\033[H\033[2J")
-    PlayerStatus(You, Target)
+    // PlayerStatus(You, Target)
 
     // fmt.Printf("Do: \n")
-    fmt.Scanln(&Action)
+    // fmt.Scanln(&Action)
+    Action, _ := <-Keys
     if Action=="a" { Jinx(&You, &Target) ; Action = "" }
 
-    PlayerStatus(You, Target)
+    // PlayerStatus(You, Target)
     if Target.Health.Current == 0 { grow += 1 ; FoeSpawn(&Target, grow) }
   }
 }
@@ -67,21 +68,29 @@ func Jinx(caster *Player, target *Player) {
   dotsForConsume := int(*&caster.Nature.Pool.Max / (math.Pi + *&caster.Nature.Stream.Cre))
   pause := 1024 / float64(dotsForConsume)
   reach := 1024.0 // between
-  fmt.Printf("█▓▒░ DEBUG[Cast][Jinx]: %v needs %d dots \n", caster, dotsForConsume)
+  dotCounter := 0
   for i:=0.0; i<float64(dotsForConsume); i+=1 {
-    if len(*&caster.Nature.Pool.Dots) == 0 { fmt.Printf("█▓▒░ DEBUG[Cast][Jinx]: Out of energy\n") ; break}
+    if len(*&caster.Nature.Pool.Dots) == 0 { break }// fmt.Printf("\n█▓▒░ DEBUG[Cast][Jinx]: Out of energy\n") ; break}
     _, w := MinusDot(&(*&caster.Nature.Pool.Dots))
     damage += w
+    dotCounter++
     time.Sleep( time.Millisecond * time.Duration( pause ))
   }
-  fmt.Printf("█▓▒░ DEBUG[Cast][Jinx]: %0.1f damage sent\n", damage)
-  go func(){
-    time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
-    *&target.Health.Current += -damage*caster.Nature.Stream.Des/target.Nature.Resistance
-    fmt.Printf("█▓▒░ DEBUG[Cast][Jinx]: %0.1f damage received\n", damage*caster.Nature.Stream.Des/target.Nature.Resistance)
-    if *&target.Health.Current < 0 { *&target.Health.Current = 0 }
-  }()
+  // fmt.Printf("█▓▒░ DEBUG[Cast][Jinx]: needs %d dots \n", dotsForConsume)
+  if CastFailed(dotsForConsume,dotCounter) {
+    fmt.Printf("█▓▒░ DEBUG[Cast][Jinx]: cast failed\n") ; return
+  } else {
+    fmt.Printf("█▓▒░ DEBUG[Cast][Jinx]: %0.1f damage sent\n", damage)
+    go func(){
+      time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
+      *&target.Health.Current += -damage*caster.Nature.Stream.Des/target.Nature.Resistance
+      // fmt.Printf("█▓▒░ DEBUG[Cast][Jinx]: %0.1f damage received\n", damage*caster.Nature.Stream.Des/target.Nature.Resistance)
+      if *&target.Health.Current < 0 { *&target.Health.Current = 0 }
+    }()
+  }
 }
+
+func CastFailed(need int, got int) bool { chance := math.Sqrt(float64(got)/float64(need)) ; if funcs.Rand() < chance { return false } ; return true }
 func MinusDot(pool *[]funcs.Dot) (string, float64) {
   index := rand.New(rand.NewSource(time.Now().UnixNano())).Intn( len(*pool) )
   buffer := *pool
@@ -206,15 +215,15 @@ func KeyListener(Keys chan string) {
     for {
       os.Stdin.Read(b)
       Keys <- string(b)
+      fmt.Print("\033[H\033[2J")
+      fmt.Println("█▓▒░ DEBUG[Keys pressed]:", string(b))
+      PlayerStatus(You, Target)
+      time.Sleep( time.Millisecond * time.Duration( 1 ))
     }
   }(Keys)
-  for {
-    stdin, _ := <-Keys
-    fmt.Print("\033[H\033[2J")
-    fmt.Println("█▓▒░ DEBUG[Keys pressed]:", stdin)
-    PlayerStatus(You, Target)
-    time.Sleep( time.Millisecond * time.Duration( 1 ))
-  }
+  // for {
+  //   stdin, _ := <-Keys
+  // }
 }
 
 func PlayerStatus(players ...Player) {
