@@ -106,6 +106,4 @@ func maxInCell(cell string) int {
   return max
 }
 
-func Bar(text string) {
-  fmt.Printf("░▒▓█%s%42s%s█▓▒░\n",R,text,E[0])
-}
+func Bar(text string) string { return fmt.Sprintf("░▒▓█%s%s%s█▓▒░",R,text,E[0]) }
