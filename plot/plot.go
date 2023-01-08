@@ -4,10 +4,10 @@ import(
   "fmt"
   "math"
   "strings"
-  "golang.org/x/term"
+  // "golang.org/x/term"
 )
 
-func Table(tuple [][]string, stretch bool) {
+func Table(tuple [][]string, compact bool) {
   // tuple := tuple
   maxs := make([]int, len(tuple[0]))
   for j, y := range tuple {
@@ -18,14 +18,14 @@ func Table(tuple [][]string, stretch bool) {
       maxs[i] = int(math.Max(2+float64( maxInCell(tuple[j][i]) ), float64(maxs[i])))
     }
   }
-  if stretch {
-    for e, _ := range maxs { maxs[e] = int( math.Log2(float64(maxs[e])+2)/math.Log2(1.1459) ) }
-    sums := 0
-    for _, each := range maxs { sums+=each }
-    termWigth, _, _ := term.GetSize(0)
-    modificator := float64(termWigth - len(maxs) - 2) / float64(sums)
-    for e, _ := range maxs { maxs[e] = int( float64(maxs[e])*modificator ) }
-  }
+  // if stretch {
+  //   for e, _ := range maxs { maxs[e] = int( math.Log2(float64(maxs[e])+2)/math.Log2(1.1459) ) }
+  //   sums := 0
+  //   for _, each := range maxs { sums+=each }
+  //   termWigth, _, _ := term.GetSize(0)
+  //   modificator := float64(termWigth - len(maxs) - 2) / float64(sums)
+  //   for e, _ := range maxs { maxs[e] = int( float64(maxs[e])*modificator ) }
+  // }
   //Head:
   fmt.Printf(" ╔")
   for i, wid := range maxs {
@@ -90,7 +90,7 @@ func plotRow(row []string, widths []int) {
       if len(cell) < max { for { if max == len(cell) {break} ; cell = append(cell, string(" ")) } }
       toprint := cell[linenum]
       fmt.Printf("%s", toprint)
-      for counter:=0 ;counter < wid-1-len(toprint); counter++ {
+      for counter:=0 ;counter < wid-1-len( []rune(toprint) ); counter++ {
         fmt.Printf(" ")
       }
       if i+1 == len(widths) {fmt.Printf("║\n")} else {
@@ -102,8 +102,20 @@ func plotRow(row []string, widths []int) {
 
 func maxInCell(cell string) int {
   lines, max := strings.Split(cell, "\n"), 0
-  for _, each := range lines { max = int(math.Max( float64(max), float64(len(each)) )) }
+  for _, each := range lines { max = int(math.Max( float64(max), float64(len( []rune(each) )) )) }
   return max
 }
 
-func Bar(text string) string { return fmt.Sprintf("░▒▓█%s%s%s█▓▒░",R,text,E[0]) }
+func Bar(text string, e int) string { return fmt.Sprintf("%s░▒▓█%s%s%s%s█▓▒░%s",E[e],R,text,E[0],E[e],E[0]) }
+func Color(text string, e int) string { return fmt.Sprintf("%s%s%s%s",E[e],B,text,E[0]) }
+
+func ShowMenu(key string) {
+  fmt.Print("\033[H\033[2J")
+  fmt.Printf("\n\t\t ─┼─── %s ────────────\n", Color("Menu",0))
+  // fmt.Printf("  │    key    action\n")
+  // fmt.Printf(" ─┼─────────────────────\n" )
+  if key == "\n" || key == "\t" { key = " " }
+  if key == "a" {fmt.Printf("\t\t  │ %s Jinx[d] \n", Bar(key,0))} else {fmt.Printf("\t\t  │     a     Jinx[d]  \n")}
+  if key != "a" {fmt.Printf("\t\t  │ %s Refresh \n", Bar(key,0))} else {fmt.Printf("\t\t  │           Refresh \n")}
+  fmt.Printf("\t\t ─┼─────────────────────\n\n")
+}

@@ -37,26 +37,28 @@ var Keys chan string = make(chan string)
 
 
 func init() {
-  fmt.Println(plot.Bar("Initializing..."))
-  PlayerBorn(&You,1)
+  fmt.Println("\n\t\t", plot.Bar("  Initializing...  ",8), "\n")
+  PlayerBorn(&You,0)
   FoeSpawn(&Target,0)
+
 }
 
 func main() {
-  fmt.Println(plot.Bar("Welcome!"))
-  KeyListener(Keys)
+  fmt.Println("\n    ",plot.Bar("Successfully login. Pres [Enter] to continue.",8),"\n")
+  fmt.Scanln()
+  plot.ShowMenu(" ")
+  PlayerStatus(You, Target)
+  UI(Keys)
   grow := 0.0
   for {
     // fmt.Print("\033[H\033[2J")
     // PlayerStatus(You, Target)
-
     // fmt.Printf("Do: \n")
     // fmt.Scanln(&Action)
     Action, _ := <-Keys
+    key := Action
     if Action=="a" { Jinx(&You, &Target) ; Action = "" }
-
-    // PlayerStatus(You, Target)
-    if Target.Health.Current == 0 { grow += 1 ; FoeSpawn(&Target, grow) }
+    if Target.Health.Current == 0 { grow += 1 ; FoeSpawn(&Target, grow) ; plot.ShowMenu(key) ; PlayerStatus(You, Target)}
   }
 }
 
@@ -64,6 +66,8 @@ func main() {
 // █▓▒░server side░▒▓█
 // ███████████████████
 
+
+// +Punch(Da) +Sting(Ad) - [physicals]
 func Jinx(caster *balance.Player, target *balance.Player) {
   damage := 0.0
   dotsForConsume := int(*&caster.Nature.Pool.Max / (math.Pi + *&caster.Nature.Stream.Cre))
@@ -78,19 +82,19 @@ func Jinx(caster *balance.Player, target *balance.Player) {
     time.Sleep( time.Millisecond * time.Duration( pause ))
   }
   if CastFailed(dotsForConsume,dotCounter) {
-    fmt.Printf("%s[Cast][Jinx]: cast failed\n", plot.Bar("DEBUG")) ; return
+    fmt.Printf("DEBUG[Cast][Jinx]: cast failed                                       \n") ; return
   } else {
-    fmt.Printf("%s[Cast][Jinx][From]: %0.1f damage sent\n", plot.Bar("DEBUG"), damage)
+    fmt.Printf("DEBUG[Cast][Jinx][From]: %0.1f damage sent                           \n", damage)
     go func(){
       time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
       *&target.Health.Current += -damage*caster.Nature.Stream.Des/target.Nature.Resistance
-      fmt.Printf("%s[Cast][Jinx][ To ]: %0.1f damage received\n", plot.Bar("DEBUG"), damage*caster.Nature.Stream.Des/target.Nature.Resistance)
+      fmt.Printf("DEBUG[Cast][Jinx][ To ]: %0.1f damage received                       \n", damage*caster.Nature.Stream.Des/target.Nature.Resistance)
       if *&target.Health.Current < 0 { *&target.Health.Current = 0 }
     }()
   }
 }
 
-func CastFailed(need int, got int) bool { chance := math.Sqrt(float64(got)/float64(need)) ; if funcs.Rand() < chance { return false } ; return true }
+func CastFailed(need int, got int) bool { return funcs.Rand() >= math.Sqrt(float64(got)/float64(need)) }
 func MinusDot(pool *[]funcs.Dot) (string, float64) {
   index := rand.New(rand.NewSource(time.Now().UnixNano())).Intn( len(*pool) )
   buffer := *pool
@@ -105,20 +109,13 @@ func PlayerBorn(player *balance.Player, mean float64){
   mean += math.Sqrt(3)
   playerTuple := [][]string{}
   buffer := balance.Player{}
-  fmt.Println("Player creation start:")
-  buffer.Health.Max = (mean/10+1)*(mean/10+1)*50 // from db
+  fmt.Println(plot.Color("Player in game:",0))
+  buffer.Health.Max = balance.BasicStats_MaxHP_FromNormale(mean) // from db
   buffer.Health.Current = math.Sqrt(buffer.Health.Max+1)-1 //from db
   current := fmt.Sprintf("Health|Max: %0.0f|Current: %0.0f|Rate: %1.0f%%", buffer.Health.Max, buffer.Health.Current, 100*buffer.Health.Current/buffer.Health.Max)
   playerTuple = plot.AddRow(current, playerTuple)
-  buffer.Nature.Stream.Cre = 1+funcs.Rand()
-  buffer.Nature.Stream.Alt = 1+funcs.Rand()
-  buffer.Nature.Stream.Des = 1+funcs.Rand()
-  stabilizer := mean/funcs.Vector(buffer.Nature.Stream.Cre, buffer.Nature.Stream.Alt, buffer.Nature.Stream.Des)
-  buffer.Nature.Stream.Cre *= stabilizer
-  buffer.Nature.Stream.Alt *= stabilizer
-  buffer.Nature.Stream.Des *= stabilizer
-  buffer.Nature.Stream.Element = "Common"
-  buffer.Nature.Resistance = 3 / (1/buffer.Nature.Stream.Cre + 1/buffer.Nature.Stream.Alt + 1/buffer.Nature.Stream.Des)
+  buffer.Nature.Stream = balance.BasicStats_Stream_FromNormaleWithElement(mean, "Common")
+  buffer.Nature.Resistance = balance.BasicStats_Resistance_FromStream(buffer.Nature.Stream)
   row := fmt.Sprintf(
     "Element\n%s|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f|Resistance\n%0.3f",
     // "Element\n%s|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f",
@@ -129,8 +126,7 @@ func PlayerBorn(player *balance.Player, mean float64){
     buffer.Nature.Resistance,
   )
   playerTuple = plot.AddRow(row,playerTuple)
-  thickness := math.Pi / ( 1/buffer.Nature.Stream.Des + 1/buffer.Nature.Stream.Alt + 1/buffer.Nature.Stream.Cre)
-  buffer.Nature.Pool.Max = math.Sqrt( thickness *1024 + 1024) - 1
+  buffer.Nature.Pool.Max = balance.BasicStats_MaxPool_FromStream(buffer.Nature.Stream)
   playerTuple = plot.AddRow( fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", buffer.Nature.Pool.Max, len(buffer.Nature.Pool.Dots), 100*float64(len(buffer.Nature.Pool.Dots))/float64(buffer.Nature.Pool.Max) ) ,playerTuple)
   plot.Table(playerTuple, false)
   *player = buffer
@@ -141,20 +137,13 @@ func FoeSpawn(foe *balance.Player, mean float64) {
   mean += math.Sqrt(3)
   playerTuple := [][]string{}
   buffer := balance.Player{}
-  fmt.Println("Foe spawning start:")
-  buffer.Health.Max = (mean/10+1)*(mean/10+1)*50 // from db
-  buffer.Health.Current = buffer.Health.Max //from db
+  fmt.Println(plot.Color("Foe spawned:",0))
+  buffer.Health.Max = balance.BasicStats_MaxHP_FromNormale(mean) // from db
+  buffer.Health.Current = buffer.Health.Max / math.Sqrt2 //from db
   current := fmt.Sprintf("Health|||Rate: %1.0f%%", 100*buffer.Health.Current/buffer.Health.Max)
   playerTuple = plot.AddRow(current, playerTuple)
-  buffer.Nature.Stream.Cre = 1+funcs.Rand()
-  buffer.Nature.Stream.Alt = 1+funcs.Rand()
-  buffer.Nature.Stream.Des = 1+funcs.Rand()
-  stabilizer := mean/funcs.Vector(buffer.Nature.Stream.Cre, buffer.Nature.Stream.Alt, buffer.Nature.Stream.Des)
-  buffer.Nature.Stream.Cre *= stabilizer
-  buffer.Nature.Stream.Alt *= stabilizer
-  buffer.Nature.Stream.Des *= stabilizer
-  buffer.Nature.Stream.Element = "Common"
-  buffer.Nature.Resistance = 3 / (1/buffer.Nature.Stream.Cre + 1/buffer.Nature.Stream.Alt + 1/buffer.Nature.Stream.Des)
+  buffer.Nature.Stream = balance.BasicStats_Stream_FromNormaleWithElement(mean, "Common")
+  buffer.Nature.Resistance = balance.BasicStats_Resistance_FromStream(buffer.Nature.Stream)
   row := fmt.Sprintf(
     "Element\n%s|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f|Resistance\n%0.3f",
     buffer.Nature.Stream.Element,
@@ -164,7 +153,7 @@ func FoeSpawn(foe *balance.Player, mean float64) {
     buffer.Nature.Resistance,
   )
   playerTuple = plot.AddRow(row,playerTuple)
-  buffer.Nature.Pool.Max = math.Sqrt(buffer.Nature.Stream.Cre*1024 + 1024) - 1
+  buffer.Nature.Pool.Max = balance.BasicStats_MaxPool_FromStream(buffer.Nature.Stream)
   playerTuple = plot.AddRow( fmt.Sprintf("Pool|Max: %0.0f", buffer.Nature.Pool.Max ) ,playerTuple)
   plot.Table(playerTuple, false)
   *foe = buffer
@@ -180,12 +169,12 @@ func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64
       time.Sleep( time.Millisecond * time.Duration( pause ))
       //block
       if *health >= maxhp {
-        fmt.Printf("%s[Player][Regeneration]:           for %0.3fs +%s %0.3f'e \n", plot.Bar("DEBUG"), pause/1000, dot.Element, dot.Weight)
+        fmt.Printf("DEBUG[Player][Regeneration]:           for %0.3fs +%s %0.3f'e \r", pause/1000, dot.Element, dot.Weight)
       } else {
-        fmt.Printf("%s[Player][Regeneration]: %+0.3f'hp for %0.3fs +%s %0.3f'e \n", plot.Bar("DEBUG"), heal, pause/1000, dot.Element, dot.Weight)
+        fmt.Printf("DEBUG[Player][Regeneration]: %+0.3f'hp for %0.3fs +%s %0.3f'e \r", heal, pause/1000, dot.Element, dot.Weight)
       }
       *pool = append(*pool, dot )
-      if *health <= 0 { fmt.Println("█▓▒░ FATAL[Player][Regeneration]: YOU ARE DEAD") ; break }
+      if *health <= 0 { fmt.Printf("DEBUG[Player][Regeneration]: %s\n", plot.Bar("You are Died",6)) ; break }
       if *health < maxhp { *health += heal } else { *health = maxhp }
       //unblock
     }
@@ -198,9 +187,9 @@ func Negeneration(health *float64, maxhp float64, maxe float64, stream funcs.Str
     pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot.Weight, 0, maxe)
     heal :=  balance.Regeneration_Heal_FromWeight(dot.Weight)
     //block
-    if *health < maxhp { fmt.Printf("█▓▒░ DEBUG[ NPC  ][Regeneration]: %+0.3f'hp for %0.3fs.\n", heal, pause/1000) }
+    if *health < maxhp { fmt.Printf("\rDEBUG[ NPC  ][Regeneration]: %+0.3f'hp for %0.3fs                      \r", heal, pause/1000) }
     time.Sleep( time.Millisecond * time.Duration( pause ))
-    if *health <= 0 { fmt.Printf("█▓▒░ DEBUG[ NPC  ][Regeneration]: Foe died\n") ; break }
+    if *health <= 0 { fmt.Printf("DEBUG[ NPC  ][Regeneration]: %s\n", plot.Bar("Foe died",0)) ; break }
     if *health < maxhp { *health += heal } else { *health = maxhp }
     //unblock
   }
@@ -210,7 +199,7 @@ func Negeneration(health *float64, maxhp float64, maxe float64, stream funcs.Str
 // █▓▒░client side░▒▓█
 // ███████████████████
 
-func KeyListener(Keys chan string) {
+func UI(Keys chan string) {
   // Keys := make(chan string)
   go func(Keys chan string) {
     // disable input buffering
@@ -221,15 +210,11 @@ func KeyListener(Keys chan string) {
     for {
       os.Stdin.Read(b)
       Keys <- string(b)
-      fmt.Print("\033[H\033[2J")
-      fmt.Println("█▓▒░ DEBUG[Keys pressed]:", string(b))
+      plot.ShowMenu(string(b))
       PlayerStatus(You, Target)
       time.Sleep( time.Millisecond * time.Duration( 1 ))
     }
   }(Keys)
-  // for {
-  //   stdin, _ := <-Keys
-  // }
 }
 
 func PlayerStatus(players ...balance.Player) {
@@ -237,7 +222,7 @@ func PlayerStatus(players ...balance.Player) {
   if players[1].Health.Current <= 0 { compare = false }
   if compare { foe = players[1] }
   playerTuple := [][]string{}
-  fmt.Println("Player status [comparing to a foe]:")
+  fmt.Println(plot.Color("Player status",0),"[comparing to a foe]:")
   line := ""
   if compare {
     line = fmt.Sprintf("Health|Max: %0.0f|Current: %0.0f|Rate: %3.0f%%|[%3.0f%%]", it.Health.Max, it.Health.Current, 100*it.Health.Current/it.Health.Max,100*foe.Health.Current/foe.Health.Max)
@@ -276,4 +261,5 @@ func PlayerStatus(players ...balance.Player) {
   }
   playerTuple = plot.AddRow(line,playerTuple)
   plot.Table(playerTuple, false)
+  fmt.Println()
 }
