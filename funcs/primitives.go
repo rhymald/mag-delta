@@ -34,3 +34,5 @@ func Vector(props ...float64) float64 {
   for _, each := range props { sum += each*each }
   return math.Sqrt(sum)
 }
+
+func LogF(n float64) float64 { return math.Log10(1+math.Abs(n))/math.Log10(math.Phi)*1000 }
