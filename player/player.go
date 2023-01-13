@@ -10,9 +10,12 @@ import (
 
 type Player struct {
   // Physical
-  Health struct {
-    Current float64
-    Max float64
+  Physical struct {
+    Health struct {
+      Current float64
+      Max float64
+    }
+    Body funcs.Stream
   }
   // Energetical
   Nature struct {
@@ -27,24 +30,26 @@ type Player struct {
 
 func PlayerBorn(player *Player, mean float64){
   buffer := Player{}
-  buffer.Health.Max = balance.BasicStats_MaxHP_FromNormale(mean) // from db
-  buffer.Health.Current = math.Sqrt(buffer.Health.Max+1)-1 //from db
-  buffer.Nature.Stream = balance.BasicStats_Stream_FromNormaleWithElement(mean, "Common")
+  buffer.Physical.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Common")
+  buffer.Physical.Health.Max = balance.BasicStats_MaxHP_FromNormale(mean) // from db
+  buffer.Physical.Health.Current = math.Sqrt(buffer.Physical.Health.Max+1)-1 //from db
+  buffer.Nature.Stream = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, "Common")
   buffer.Nature.Resistance = balance.BasicStats_Resistance_FromStream(buffer.Nature.Stream)
   buffer.Nature.Pool.Max = balance.BasicStats_MaxPool_FromStream(buffer.Nature.Stream)
   *player = buffer
-  go func(){ Regeneration(&(*&player.Nature.Pool.Dots), &(*&player.Health.Current), *&player.Nature.Pool.Max, *&player.Health.Max, *&player.Nature.Stream) }()
+  go func(){ Regeneration(&(*&player.Nature.Pool.Dots), &(*&player.Physical.Health.Current), *&player.Nature.Pool.Max, *&player.Physical.Health.Max, *&player.Nature.Stream) }()
 }
 
 func FoeSpawn(foe *Player, mean float64) {
   buffer := Player{}
-  buffer.Health.Max = balance.BasicStats_MaxHP_FromNormale(mean) // from db
-  buffer.Health.Current = buffer.Health.Max / math.Sqrt2 //from db
-  buffer.Nature.Stream = balance.BasicStats_Stream_FromNormaleWithElement(mean, "Common")
+  buffer.Physical.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Common")
+  buffer.Physical.Health.Max = balance.BasicStats_MaxHP_FromNormale(mean) // from db
+  buffer.Physical.Health.Current = buffer.Physical.Health.Max / math.Sqrt2 //from db
+  buffer.Nature.Stream = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, "Common")
   buffer.Nature.Resistance = balance.BasicStats_Resistance_FromStream(buffer.Nature.Stream)
   buffer.Nature.Pool.Max = balance.BasicStats_MaxPool_FromStream(buffer.Nature.Stream)
   *foe = buffer
-  go func(){ Negeneration(&(*&foe.Health.Current), *&foe.Health.Max, *&foe.Nature.Pool.Max, *&foe.Nature.Stream) }()
+  go func(){ Negeneration(&(*&foe.Physical.Health.Current), *&foe.Physical.Health.Max, *&foe.Nature.Pool.Max, *&foe.Nature.Stream) }()
 }
 
 func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64, stream funcs.Stream) {

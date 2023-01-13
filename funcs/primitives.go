@@ -44,3 +44,13 @@ func ChancedRound(a float64) int {
   if Rand() < c {return int(b)} else {return int(l)}
   return 0
 }
+
+func ChancedRand(i int) float64 {
+  counter, randy := 0, 0.0
+  for {
+    if counter >= i {break}
+    randy += Rand()+Rand()
+    counter++
+  }
+  return randy
+}
