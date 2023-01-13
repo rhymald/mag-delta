@@ -35,4 +35,12 @@ func Vector(props ...float64) float64 {
   return math.Sqrt(sum)
 }
 
-func LogF(n float64) float64 { return math.Log10(1+math.Abs(n))/math.Log10(math.Phi)*1000 }
+func LogF(n float64) float64 { return math.Log10(1+math.Abs(n))/math.Log10(math.Phi) }
+
+func ChancedRound(a float64) int {
+  b,l:=math.Ceil(a),math.Floor(a)
+  c:=math.Abs(math.Abs(a)-math.Abs(math.Min(b, l)))
+  if a<0 {c = 1-c}
+  if Rand() < c {return int(b)} else {return int(l)}
+  return 0
+}

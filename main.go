@@ -7,29 +7,11 @@ import (
   "math/rand"
   "rhymald/mag-delta/plot"
   "rhymald/mag-delta/funcs"
-  // "rhymald/mag-delta/balance"
+  "rhymald/mag-delta/balance"
   "rhymald/mag-delta/player"
   "os"
   "os/exec"
-  // "github.com/rhymald/mag-gamma"
 )
-
-// type Player struct {
-//   // Physical
-//   Health struct {
-//     Current float64
-//     Max float64
-//   }
-//   // Energetical
-//   Nature struct {
-//     Resistance float64
-//     Stream funcs.Stream
-//     Pool struct {
-//       Max float64
-//       Dots []funcs.Dot
-//     }
-//   }
-// }
 
 var You player.Player
 var Target player.Player
@@ -39,27 +21,23 @@ var Keys chan string = make(chan string)
 
 func init() {
   fmt.Println("\n\t\t", plot.Bar("  Initializing...  ",8), "\n")
-  player.PlayerBorn(&You,100)
+  player.PlayerBorn(&You,0)
   player.FoeSpawn(&Target,0)
 
 }
 
 func main() {
-  fmt.Println("\n    ",plot.Bar("Successfully login. Pres [Enter] to continue.",8),"\n")
+  fmt.Println("\n    ",plot.Bar("Successfully login. Press [Enter] to continue.",8),"\n")
   fmt.Scanln()
   plot.ShowMenu(" ")
   PlayerStatus(You, Target)
   UI(Keys)
-  grow := 1.0
+  grow := 1/math.Phi/math.Phi/math.Phi
   for {
-    // fmt.Print("\033[H\033[2J")
-    // PlayerStatus(You, Target)
-    // fmt.Printf("Do: \n")
-    // fmt.Scanln(&Action)
     Action, _ := <-Keys
     key := Action
     if Action=="a" { Jinx(&You, &Target) ; Action = "" }
-    if Target.Health.Current == 0 { grow+=grow*0.1+1 ; player.FoeSpawn(&Target, grow) ; plot.ShowMenu(key)}// ; PlayerStatus(You, Target)}
+    if Target.Health.Current == 0 { grow = grow*math.Cbrt(math.Phi) ; player.FoeSpawn(&Target, grow) ; plot.ShowMenu(key)}// ; PlayerStatus(You, Target)}
   }
 }
 
@@ -70,32 +48,31 @@ func main() {
 
 // +Punch(Da) +Sting(Ad) - [physicals]
 func Jinx(caster *player.Player, target *player.Player) {
+  dotsForConsume := balance.Cast_Common_DotsPerString(caster.Nature.Stream) //Cre
+  pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Nature.Stream) //Alt
+  reach := 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Nature.Stream) // Des
   damage := 0.0
-  dotsForConsume := int(*&caster.Nature.Pool.Max / (math.Pi + *&caster.Nature.Stream.Cre))
-  pause := 1024 / float64(dotsForConsume)
-  reach := 1024.0 // between
   dotCounter := 0
-  for i:=0.0; i<float64(dotsForConsume); i+=1 {
+  for i:=0; i<dotsForConsume; i++ {
     if len(*&caster.Nature.Pool.Dots) == 0 { break }// fmt.Printf("\n█▓▒░ DEBUG[Cast][Jinx]: Out of energy\n") ; break}
     _, w := MinusDot(&(*&caster.Nature.Pool.Dots))
     damage += w
     dotCounter++
     time.Sleep( time.Millisecond * time.Duration( pause ))
   }
-  if CastFailed(dotsForConsume,dotCounter) {
-    fmt.Printf("DEBUG[Cast][Jinx]: cast failed                                       \n") ; return
+  if balance.Cast_Common_Failed(dotsForConsume,dotCounter) {
+    fmt.Printf("DEBUG[Cast][Jinx]: cast failed ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\n") ; return
   } else {
-    fmt.Printf("DEBUG[Cast][Jinx][From]: %0.1f damage sent                           \n", damage)
+    fmt.Printf("DEBUG[Cast][Jinx][From]: %0.1f damage sent for %.0f ms░░░░░░░░░░░░░░░░░░░░░░░░░\n", damage, pause*float64(dotsForConsume))
     go func(){
       time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
       *&target.Health.Current += -damage*caster.Nature.Stream.Des/target.Nature.Resistance
-      fmt.Printf("DEBUG[Cast][Jinx][ To ]: %0.1f damage received                       \n", damage*caster.Nature.Stream.Des/target.Nature.Resistance)
+      fmt.Printf("DEBUG[Cast][Jinx][ To ]: %0.1f damage received after %.0f ms ░░░░░░░░░░░░░░░░░░░\n", damage*caster.Nature.Stream.Des/target.Nature.Resistance, reach)
       if *&target.Health.Current < 0 { *&target.Health.Current = 0 }
     }()
   }
 }
 
-func CastFailed(need int, got int) bool { return funcs.Rand() >= math.Sqrt(float64(got)/float64(need)) }
 func MinusDot(pool *[]funcs.Dot) (string, float64) {
   index := rand.New(rand.NewSource(time.Now().UnixNano())).Intn( len(*pool) )
   buffer := *pool
