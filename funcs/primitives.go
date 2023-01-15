@@ -54,3 +54,10 @@ func ChancedRand(i int) float64 {
   }
   return randy
 }
+
+func MeanStream(strs []Stream) Stream {
+  mean := Stream{}
+  for _, each := range strs { mean.Alt += 1/each.Alt ; mean.Cre += 1/each.Cre ; mean.Des += 1/each.Des }
+  mean.Alt, mean.Cre, mean.Des = float64(len(strs))/mean.Alt, float64(len(strs))/mean.Cre, float64(len(strs))/mean.Des
+  return mean
+}
