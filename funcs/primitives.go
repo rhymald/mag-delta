@@ -6,18 +6,19 @@ import (
   "crypto/sha512"
   "encoding/binary"
   "time"
+  _ "encoding/json"
 )
 
 type Dot struct {
-  Weight float64
-  Element string
+  Weight float64 `json:"Weight"`
+  Element string `json:"Element,omitempty"`
 }
 
 type Stream struct {
-  Cre float64
-  Alt float64
-  Des float64
-  Element string
+  Cre float64 `json:"Cre"`
+  Alt float64 `json:"Alt"`
+  Des float64 `json:"Des"`
+  Element string `json:"Element,omitempty"`
 }
 
 func Rand() float64 {

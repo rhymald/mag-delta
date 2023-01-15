@@ -26,7 +26,7 @@ func UI(Keys chan string, you player.Player, target player.Player) {
 
 func PlayerStatus(players ...player.Player) {
   it, foe, compare := players[0], player.Player{}, len(players) > 1
-  if players[1].Physical.Health.Current <= 0 { compare = false }
+  if players[1].Physical.Health.Current <= 0 || players[0].NPC { compare = false }
   if compare { foe = players[1] }
   playerTuple := [][]string{}
   fmt.Println(plot.Color("Player status",0),"[comparing to a foe]:")

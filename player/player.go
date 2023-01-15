@@ -5,32 +5,35 @@ import (
   "rhymald/mag-delta/balance"
   "math"
   "fmt"
+  _ "encoding/json"
   "time"
 )
 
 type Player struct {
-  Busy bool
+  NPC bool `json:"NPC"`
+  Busy bool `json:"Busy"`
   // Physical
   Physical struct {
     Health struct {
-      Current float64
-      Max float64
-    }
-    Body funcs.Stream
-  }
+      Current float64 `json:"Current"`
+      Max float64 `json:"Max"`
+    } `json:"Health"`
+    Body funcs.Stream `json:"Body"`
+  } `json:"Physical"`
   // Energetical
   Nature struct {
-    Resistance float64
-    Stream funcs.Stream
+    Resistance float64 `json:"Current,omitempty"`
+    Stream funcs.Stream `json:"Stream"`
     Pool struct {
-      Max float64
-      Dots []funcs.Dot
-    }
-  }
+      Max float64 `json:"Max"`
+      Dots []funcs.Dot `json:"Dots,omitempty"`
+    } `json:"Pool"`
+  } `json:"Nature"`
 }
 
 func PlayerBorn(player *Player, mean float64){
   buffer := Player{}
+  buffer.NPC = false
   buffer.Physical.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Common")
   buffer.Physical.Health.Max = balance.BasicStats_MaxHP_FromBody(buffer.Physical.Body) // from db
   buffer.Physical.Health.Current = math.Sqrt(buffer.Physical.Health.Max+1)-1 //from db
@@ -43,6 +46,7 @@ func PlayerBorn(player *Player, mean float64){
 
 func FoeSpawn(foe *Player, mean float64) {
   buffer := Player{}
+  buffer.NPC = true
   buffer.Physical.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Common")
   buffer.Physical.Health.Max = balance.BasicStats_MaxHP_FromBody(buffer.Physical.Body) // from db
   buffer.Physical.Health.Current = buffer.Physical.Health.Max / math.Sqrt2 //from db
