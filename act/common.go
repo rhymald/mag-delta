@@ -12,11 +12,13 @@ import (
 
 // +Punch(Da) +Sting(Ad) - [physicals]
 func Jinx(caster *player.Player, target *player.Player) {
+  // if *&caster.Busy == true { fmt.Printf("DEBUG[Cast][Jinx]: busy ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\n") ; return }
   dotsForConsume := balance.Cast_Common_DotsPerString(caster.Nature.Stream) //Cre
   pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Nature.Stream) //Alt
   reach := 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Nature.Stream) // Des
   damage := 0.0
   dotCounter := 0
+  // *&caster.Busy = true
   for i:=0; i<dotsForConsume; i++ {
     if len(*&caster.Nature.Pool.Dots) == 0 { break }
     _, w := MinusDot(&(*&caster.Nature.Pool.Dots))
@@ -24,6 +26,7 @@ func Jinx(caster *player.Player, target *player.Player) {
     dotCounter++
     time.Sleep( time.Millisecond * time.Duration( pause ))
   }
+  // *&caster.Busy = false
   if balance.Cast_Common_Failed(dotsForConsume,dotCounter) {
     fmt.Printf("DEBUG[Cast][Jinx]: cast failed ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\n") ; return
   } else {

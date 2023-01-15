@@ -10,7 +10,14 @@ import (
 )
 
 type Player struct {
-  NPC bool `json:"NPC"`
+  // For BlockChain
+  ID struct {
+    NPC bool `json:"NPC"`
+    Name string `json:"Name,omitempty"`
+    Date int64 `json:"Date,omitempty"`
+    Last int64 `json:"Last,omitempty"`
+  } `json:"ID"`
+  // For actions
   Busy bool `json:"Busy"`
   // Physical
   Physical struct {
@@ -33,7 +40,9 @@ type Player struct {
 
 func PlayerBorn(player *Player, mean float64){
   buffer := Player{}
-  buffer.NPC = false
+  buffer.ID.NPC = false
+  buffer.ID.Date = time.Now().UnixNano()
+  buffer.ID.Last = time.Now().UnixNano()
   buffer.Physical.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Common")
   buffer.Physical.Health.Max = balance.BasicStats_MaxHP_FromBody(buffer.Physical.Body) // from db
   buffer.Physical.Health.Current = math.Sqrt(buffer.Physical.Health.Max+1)-1 //from db
@@ -46,7 +55,9 @@ func PlayerBorn(player *Player, mean float64){
 
 func FoeSpawn(foe *Player, mean float64) {
   buffer := Player{}
-  buffer.NPC = true
+  buffer.ID.NPC = true
+  buffer.ID.Date = time.Now().UnixNano()
+  buffer.ID.Last = time.Now().UnixNano()
   buffer.Physical.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Common")
   buffer.Physical.Health.Max = balance.BasicStats_MaxHP_FromBody(buffer.Physical.Body) // from db
   buffer.Physical.Health.Current = buffer.Physical.Health.Max / math.Sqrt2 //from db

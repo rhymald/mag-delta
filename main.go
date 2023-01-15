@@ -13,6 +13,7 @@ import (
   "golang.org/x/crypto/bcrypt"
   "encoding/json"
   "encoding/base64"
+  "time"
 )
 
 var You player.Player
@@ -23,16 +24,9 @@ var BC *BlockChain = InitBlockChain()
 
 func init() {
   fmt.Println("\n\t\t  ", plot.Bar("Initializing...",8), "\n")
-  aaa := ToJson(You)
-  You = FromJson(aaa, You)
-  aaa = ToJson(Target)
-  You = FromJson(aaa, You)
   player.PlayerBorn(&You,0)
-  aaa = ToJson(You)
-  You = FromJson(aaa, You)
+  BC.AddBlock(ToJson(You))
   player.FoeSpawn(&Target,0)
-  aaa = ToJson(Target)
-  You = FromJson(aaa, You)
 }
 
 func main() {
@@ -58,11 +52,13 @@ func actions() string {
 }
 
 // Stateful database SERVER!!!
+
 type BlockChain struct {
   Blocks []*Block
 }
 
 type Block struct {
+  Time int64
   Hash []byte
   Data []byte
   Prev []byte
@@ -75,7 +71,7 @@ func (block *Block) CalculateHash() {
 }
 
 func CreateBlock(data string, prevHash []byte) *Block {
-  block := &Block{Hash: []byte{}, Data: []byte(data), Prev: prevHash }
+  block := &Block{Hash: []byte{}, Data: []byte(data), Prev: prevHash, Time: time.Now().UnixNano() }
   block.CalculateHash()
   return block
 }
@@ -99,13 +95,13 @@ func ToJson(thing player.Player) string {
   fmt.Println(string(b))
   encoded := base64.StdEncoding.EncodeToString(b)
   fmt.Println(encoded)
-  fmt.Println("   ───────── ───────── ───────── ───────── ───────── ───────── ───────── ───────── ───────── ───────── ")
+  fmt.Println("   ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ")
+  _ = FromJson(encoded, thing)
   return encoded
 }
 
 func FromJson(code string, thing player.Player) player.Player {
   copy := &thing
-  fmt.Println("   ───────── ───────── ───────── ───────── ───────── ───────── ───────── ───────── ───────── ───────── ")
   decoded, _ := base64.StdEncoding.DecodeString(code)
   fmt.Println(string(decoded))
   err := json.Unmarshal(decoded, copy)
