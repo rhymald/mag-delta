@@ -21,6 +21,7 @@ func init() {
   player.PlayerBorn(&You,0)
   // blockchain.ListBlocks(BC)
   blockchain.AddBlock(BC, You)
+  client.PlayerStatus(You, Target)  
   blockchain.ListBlocks(BC)
   player.FoeSpawn(&Target,0)
 }

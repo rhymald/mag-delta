@@ -1,15 +1,14 @@
 package blockchain
 
 import (
-  "bytes"
-  "golang.org/x/crypto/bcrypt"
-  "crypto/sha512"
+  // "bytes"
+  // "crypto/sha512"
   "encoding/json"
   "encoding/base64"
   "time"
   "fmt"
   "rhymald/mag-delta/player"
-  "rhymald/mag-delta/funcs"
+  // "rhymald/mag-delta/funcs"
 )
 
 type BlockChain struct {
@@ -21,25 +20,30 @@ type Block struct {
   Hash []byte
   Data []byte
   Prev []byte
+  Nonce int
 }
-
-func (block *Block) CalculateHash() {
-  info := bytes.Join( [][]byte{ block.Data, block.Prev }, []byte{} )
-  sum := sha512.Sum512(info)
-  hash, err := bcrypt.GenerateFromPassword( sum[:] , Difficulty)
-  if err != nil { fmt.Println(err) }
-  block.Hash = hash[:]
-}
+//
+// func (block *Block) CalculateHash() {
+//   info := bytes.Join( [][]byte{ block.Data, block.Prev }, []byte{} )
+//   sum := sha512.Sum512(info)
+//   hash, err := bcrypt.GenerateFromPassword( sum[:] , Difficulty)
+//   if err != nil { fmt.Println(err) }
+//   block.Hash = hash[:]
+// }
 
 func CreateBlock(data string, prevHash []byte) *Block {
-  block := &Block{Hash: []byte{}, Data: []byte(data), Prev: prevHash, Time: time.Now().UnixNano() }
-  block.CalculateHash()
+  block := &Block{Hash: []byte{}, Data: []byte(data), Prev: prevHash, Time: time.Now().UnixNano(), Nonce: 0 }
+  // block.CalculateHash()
+  pow := NewProof(block)
+  nonce, hash := Run(pow)
+  block.Hash = hash[:]
+  block.Nonce = nonce
   return block
 }
 
 func AddBlock(chain *BlockChain, player player.Player) {
-  player.Physical.Health.Current = 0
-  player.Nature.Pool.Dots = []funcs.Dot{}
+  // player.Physical.Health.Current = 0
+  // player.Nature.Pool.Dots = []funcs.Dot{}
   datastring := ToJson(player)
   prevBlock := chain.Blocks[len(chain.Blocks)-1] // last block
   new := CreateBlock(datastring, prevBlock.Hash)
@@ -48,7 +52,7 @@ func AddBlock(chain *BlockChain, player player.Player) {
 
 func Genesis() *Block {
   // text, _ := bcrypt.GenerateFromPassword( []byte("Hello, artifical world!") , 10)
-  return CreateBlock( "Hello, artifical world!", []byte("His Allmightyness, Energy of Unpredictable Activity"))
+  return CreateBlock( "Hello, artifical world!", []byte{})
 }
 func InitBlockChain() *BlockChain { return &BlockChain{[]*Block{Genesis()}} }
 
@@ -76,9 +80,16 @@ func FromJson(code string, thing player.Player) player.Player {
 }
 
 func ListBlocks(chain *BlockChain) {
-  fmt.Println(" ─┼─┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────")
+  // fmt.Println(" ─┼─┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────")
   for i, each := range chain.Blocks {
-    fmt.Printf("  ┼─┼─ %d ─── ─── ───\n  │ Hash\t%s\n  │ Time\t%d\n  │ Data\t%.100s\n  │ Parent\t%s\n", i, string(each.Hash), each.Time, each.Data, each.Prev)
+    fmt.Printf("%x\n", each.Prev)
+    fmt.Printf(" ─┼─── %d ", i)
+    fmt.Printf(" ─── Time %d", each.Time)
+    fmt.Printf(" ─── Nonce %d", each.Nonce)
+    fmt.Printf(" ─── Valid %v\n", Validate(NewProof(each)))
+    fmt.Printf("  │ Data: %s\n", each.Data)
+    fmt.Printf("%x\n", string(each.Hash))
+    // pow := NewProof(each)
   }
-  fmt.Println(" ─┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
+  // fmt.Println(" ─┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
 }
