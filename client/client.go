@@ -50,7 +50,7 @@ func PlayerStatus(players ...player.Player) {
   playerTuple = plot.AddRow(line, playerTuple)
   if compare {
     line = fmt.Sprintf(
-      " \nPhysical|Complexion\n  %0.3f \n [%0.3f]|Endurance\n  %0.3f \n [%0.3f]|Strength\n  %0.3f \n [%0.3f]",
+      " \nPhysical|Size\n  %0.3f \n [%0.3f]|Endurance\n  %0.3f \n [%0.3f]|Strength\n  %0.3f \n [%0.3f]",
       it.Physical.Body.Cre,
       foe.Physical.Body.Cre,
       it.Physical.Body.Alt,
@@ -60,7 +60,7 @@ func PlayerStatus(players ...player.Player) {
     )
   } else {
     line = fmt.Sprintf(
-      " \nPhysical|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f",
+      " \nPhysical|Size\n%0.3f|Endurance\n%0.3f|Strength\n%0.3f",
       it.Physical.Body.Cre,
       it.Physical.Body.Alt,
       it.Physical.Body.Des,
