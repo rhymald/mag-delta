@@ -97,7 +97,7 @@ func Negeneration(health *float64, maxhp float64, maxe float64, body funcs.Strea
       heal := balance.Regeneration_Heal_FromBody(body)
       time.Sleep( time.Millisecond * time.Duration( pause ))
       //block
-      if *health < maxhp { fmt.Printf("\rDEBUG[ NPC  ][Regeneration]: %+0.3f'hp for %0.3fs ░░░░░░░░░░░░░░░░░░░░░░░░░\r", heal, pause/1000) }
+      if *health < maxhp { fmt.Printf("DEBUG[ NPC  ][Regeneration]: %+0.3f'hp for %0.3fs ░░░░░░░░░░░░░░░░░░░░░░░░░\r", heal, pause/1000) }
       if *health <= 0 { fmt.Printf("DEBUG[ NPC  ][Regeneration]: Foe died ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\n") ; break }
       if *health < maxhp { *health += heal } else { *health = maxhp }
       //unblock

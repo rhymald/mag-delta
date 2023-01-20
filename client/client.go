@@ -2,27 +2,10 @@ package client
 
 import (
   "fmt"
-  "time"
+  // "time"
   "rhymald/mag-delta/client/plot"
   "rhymald/mag-delta/player"
-  "os"
-  "os/exec"
 )
-
-func UI(Keys chan string, you player.Player, target player.Player) {
-  go func(Keys chan string) {
-    exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
-    exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
-    var b = make([]byte, 1)
-    for {
-      os.Stdin.Read(b)
-      Keys <- string(b)
-      plot.ShowMenu(string(b))
-      PlayerStatus(you, target)
-      time.Sleep( time.Millisecond * time.Duration( 128 ))
-    }
-  }(Keys)
-}
 
 func PlayerStatus(players ...player.Player) {
   it, foe, compare := players[0], player.Player{}, len(players) > 1
