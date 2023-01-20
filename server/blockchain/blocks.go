@@ -8,7 +8,7 @@ import (
   "time"
   "fmt"
   "rhymald/mag-delta/player"
-  // "rhymald/mag-delta/funcs"
+  "rhymald/mag-delta/funcs"
 )
 
 type BlockChain struct {
@@ -42,11 +42,15 @@ func CreateBlock(data string, prevHash []byte) *Block {
 }
 
 func AddBlock(chain *BlockChain, player player.Player) {
-  // player.Physical.Health.Current = 0
-  // player.Nature.Pool.Dots = []funcs.Dot{}
+  player.Physical.Health.Current = 0
+  player.Nature.Pool.Dots = []funcs.Dot{}
+  player.Busy = false
   datastring := ToJson(player)
   prevBlock := chain.Blocks[len(chain.Blocks)-1] // last block
   new := CreateBlock(datastring, prevBlock.Hash)
+  if len(chain.Blocks) != 0 {
+    if datastring == string(chain.Blocks[len(chain.Blocks)-1].Data) { return }
+  }
   chain.Blocks = append(chain.Blocks, new)
 }
 
@@ -82,14 +86,15 @@ func FromJson(code string, thing player.Player) player.Player {
 func ListBlocks(chain *BlockChain) {
   // fmt.Println(" ─┼─┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────")
   for i, each := range chain.Blocks {
-    fmt.Printf("%x\n", each.Prev)
+    fmt.Printf("  │ %x\n", each.Prev)
     fmt.Printf(" ─┼─── %d ", i)
     fmt.Printf(" ─── Time %d", each.Time)
     fmt.Printf(" ─── Nonce %d", each.Nonce)
     fmt.Printf(" ─── Valid %v\n", Validate(NewProof(each)))
     fmt.Printf("  │ Data: %s\n", each.Data)
-    fmt.Printf("%x\n", string(each.Hash))
+    fmt.Printf("  │ %x\n", string(each.Hash))
     // pow := NewProof(each)
   }
+  fmt.Println("  │ ")
   // fmt.Println(" ─┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
 }

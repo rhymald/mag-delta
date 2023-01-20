@@ -20,7 +20,7 @@ func Regeneration_TimeoutMilliseconds_FromWeightPool(w float64, curr float64, ma
 func Regeneration_Heal_FromBody(body funcs.Stream) float64 {return math.Sqrt(math.Log10(1+funcs.Vector(body.Cre,body.Des,body.Alt)))*(funcs.Rand()*0.5+0.75) }
 func Regeneration_DefaultTimeout() float64 {return 1024*math.Pi}
 func Regeneration_DotWeight_FromStream(stream funcs.Stream) funcs.Dot {
-  w := math.Pow(math.Log2(1+funcs.Vector(stream.Cre,stream.Des,stream.Alt)),2)
+  w := funcs.Log(math.Cbrt(stream.Cre*stream.Des*stream.Alt))
   return funcs.Dot{Element:stream.Element,Weight:w*(funcs.Rand()*0.5+0.75)}
 }
 

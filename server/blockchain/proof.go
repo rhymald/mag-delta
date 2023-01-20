@@ -3,7 +3,7 @@ package blockchain
 import (
   "math/big"
   // "golang.org/x/crypto/bcrypt"
-  "fmt"
+  // "fmt"
   // "time"
   "encoding/binary"
   "bytes"
@@ -39,7 +39,7 @@ func Run(pow *PoW) (int, []byte) {
   for nonce < math.MaxInt64 {
     data := InitData(pow, nonce)
     hash = sha512.Sum512(data)
-    fmt.Printf("\r%x", hash)
+    // fmt.Printf("\r%x", hash)
     // hash, _ = bcrypt.GenerateFromPassword( sum[:] , Difficulty)
     intHash.SetBytes(hash[:])
     if intHash.Cmp(pow.Target) == -1 {
@@ -48,7 +48,7 @@ func Run(pow *PoW) (int, []byte) {
       nonce++
     }
   }
-  fmt.Println()
+  // fmt.Println()
   // fin, _ := bcrypt.GenerateFromPassword( hash[:], Difficulty )
   return nonce, hash[:]
 }

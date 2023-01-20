@@ -4,7 +4,7 @@ import (
   "fmt"
   "math"
   "rhymald/mag-delta/client/plot"
-  // "rhymald/mag-delta/server/blockchain"
+  "rhymald/mag-delta/server/blockchain"
   "rhymald/mag-delta/client"
   "rhymald/mag-delta/player"
   "rhymald/mag-delta/act"
@@ -17,15 +17,13 @@ var You player.Player
 var Target player.Player
 var Action string
 var Keys chan string = make(chan string)
-// var BC *blockchain.BlockChain = blockchain.InitBlockChain()
+var StatChain *blockchain.BlockChain = blockchain.InitBlockChain()
 
 func init() {
   fmt.Println("\n\t\t  ", plot.Bar("Initializing...",8), "\n")
   player.PlayerBorn(&You,0)
-  // blockchain.ListBlocks(BC)
-  // blockchain.AddBlock(BC, You)
+  go func() { for { blockchain.AddBlock(StatChain, You) }}()
   client.PlayerStatus(You, Target)
-  // blockchain.ListBlocks(BC)
   player.FoeSpawn(&Target,0)
   fmt.Println("\n\t\t", plot.Bar("Successfully login",1),"\n")
   client.PlayerStatus(You, Target)
@@ -53,6 +51,7 @@ func main() {
     for {
       Action, _ := <-Keys
       if Action=="a" { go func(){ act.Jinx(&You, &Target) }() ; Action = "" }
+      if Action=="?" { go func(){ time.Sleep( time.Millisecond * time.Duration( 128 )) ; blockchain.ListBlocks(StatChain) }() ; Action = "" }
       if Target.Physical.Health.Current <= 0 { grow = grow*math.Cbrt(math.Phi) ; player.FoeSpawn(&Target, grow) ; plot.ShowMenu(Action)}// ; PlayerStatus(You, Target)}
       time.Sleep( time.Millisecond * time.Duration( 128 ))
     }
