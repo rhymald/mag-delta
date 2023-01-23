@@ -112,10 +112,19 @@ func Color(text string, e int) string { return fmt.Sprintf("%s%s%s%s",E[e],B,tex
 func ShowMenu(key string) {
   fmt.Print("\033[H\033[2J")
   fmt.Printf("\n\t\t ─┼─── %s ────────────\n", Color("Menu",0))
-  // fmt.Printf("  │    key    action\n")
-  // fmt.Printf(" ─┼─────────────────────\n" )
+  // switch key {
+  //   case "a":
+  //     go func(){ act.Jinx(&You, &Target) }()
+  //     Action = ""
+  //   case "?":
+  //     go func(){ time.Sleep( time.Millisecond * time.Duration( 128 )) ; blockchain.ListBlocks(StatChain) }()
+  //     Action = ""
+  //   default:
+  //     time.Sleep( time.Millisecond * time.Duration( 128 ))
+  // }
   if key == "\n" || key == "\t" { key = " " }
   if key == "a" {fmt.Printf("\t\t  │ %s Jinx[d] \n", Bar(key,0))} else {fmt.Printf("\t\t  │     a     Jinx[d]  \n")}
-  if key != "a" {fmt.Printf("\t\t  │ %s Refresh \n", Bar(key,0))} else {fmt.Printf("\t\t  │           Refresh \n")}
+  if key == "?" {fmt.Printf("\t\t  │ %s ~ Chain \n", Bar(key,0))} else {fmt.Printf("\t\t  │     ?     ~ Chain  \n")}
+  if key != "a" && key != "?" {fmt.Printf("\t\t  │ %s ~ Refresh \n", Bar(key,0))} else {fmt.Printf("\t\t  │           ~ Refresh \n")}
   fmt.Printf("\t\t ─┼─────────────────────\n\n")
 }

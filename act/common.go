@@ -5,7 +5,7 @@ import (
   "rhymald/mag-delta/balance"
   "rhymald/mag-delta/player"
   "math/rand"
-  // "math"
+  "math"
   "time"
   "fmt"
 )
@@ -33,8 +33,8 @@ func Jinx(caster *player.Player, target *player.Player) {
     fmt.Printf("DEBUG[Cast][Jinx][From]: %0.1f damage sent for %.0f ms░░░░░░░░░░░░░░░░░░░░░░░░░\n", damage, pause*float64(dotsForConsume))
     go func(){
       time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
-      *&target.Physical.Health.Current += -damage*(caster.Nature.Stream.Des/target.Nature.Resistance)
-      fmt.Printf("DEBUG[Cast][Jinx][ To ]: %0.1f damage received after %.0f ms ░░░░░░░░░░░░░░░░░░░\n", damage*caster.Nature.Stream.Des/target.Nature.Resistance, reach)
+      *&target.Physical.Health.Current += -damage*math.Sqrt(caster.Nature.Stream.Des/target.Nature.Resistance)
+      fmt.Printf("DEBUG[Cast][Jinx][ To ]: %0.1f damage received after %.0f ms ░░░░░░░░░░░░░░░░░░░\n", damage*math.Sqrt(caster.Nature.Stream.Des/target.Nature.Resistance), reach)
       if *&target.Physical.Health.Current < 0 { *&target.Physical.Health.Current = 0 }
     }()
   }
