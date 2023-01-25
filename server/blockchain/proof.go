@@ -11,33 +11,37 @@ import (
   "math"
 )
 
-const Difficulty = 20
+const PlayerDiff = 24 // playable players
+const PhenomenaeDiff = 20 // nature, weather and objects
+const NPCDiff = 16 // nonplayable player
+const SessionDiff = 12 // for player sessions events: cast, ealth, regen, move, etc.
+const LifecycleDiff = 8 // for spawn/death and drop/loot
 
-type PoW struct {
-  Block *Block
+type pow struct {
+  Block *block
   Target *big.Int
 }
 
-func NewProof(b *Block) *PoW {
+func newProof(b *block) *pow {
   target := big.NewInt( 1 )
-  target.Lsh(target, uint(512-Difficulty))
-  return &PoW{Block: b, Target: target}
+  target.Lsh(target, uint(512-PlayerDiff))
+  return &pow{Block: b, Target: target}
 }
 
-func InitData(pow *PoW, nonce int) []byte { return bytes.Join( [][]byte{ pow.Block.Data, pow.Block.Prev, BigToHex(int64(nonce)), BigToHex(int64(Difficulty)) }, []byte{} ) }
+func initData(pow *pow, nonce int) []byte { return bytes.Join( [][]byte{ pow.Block.Data, pow.Block.Prev, bigToHex(int64(nonce)), bigToHex(int64(PlayerDiff)) }, []byte{} ) }
 
-func BigToHex(num int64) []byte {
+func bigToHex(num int64) []byte {
   buff := new(bytes.Buffer)
   _ = binary.Write(buff, binary.BigEndian, num)
   return buff.Bytes()
 }
 
-func Run(pow *PoW) (int, []byte) {
+func run(pow *pow) (int, []byte) {
   var intHash big.Int
   var hash [64]byte
   nonce := 0
   for nonce < math.MaxInt64 {
-    data := InitData(pow, nonce)
+    data := initData(pow, nonce)
     hash = sha512.Sum512(data)
     // fmt.Printf("\r%x", hash)
     // hash, _ = bcrypt.GenerateFromPassword( sum[:] , Difficulty)
@@ -53,9 +57,9 @@ func Run(pow *PoW) (int, []byte) {
   return nonce, hash[:]
 }
 
-func Validate(pow *PoW) bool {
+func validate(pow *pow) bool {
   var intHash big.Int
-  data := InitData(pow, pow.Block.Nonce)
+  data := initData(pow, pow.Block.Nonce)
   hash := sha512.Sum512(data)
   intHash.SetBytes(hash[:])
   return intHash.Cmp(pow.Target) == -1

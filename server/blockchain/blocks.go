@@ -13,8 +13,9 @@ import (
 )
 
 
-type Block struct {
+type block struct {
   Time int64
+  Namespace string
   Hash []byte
   Data []byte
   Prev []byte
@@ -29,22 +30,22 @@ type Block struct {
 //   block.Hash = hash[:]
 // }
 
-func CreateBlock(data string, prevHash []byte) *Block {
-  block := &Block{Hash: []byte{}, Data: []byte(data), Prev: prevHash, Time: time.Now().UnixNano(), Nonce: 0 }
+func createBlock(data string, prevHash []byte) *block {
+  block := &block{Hash: []byte{}, Data: []byte(data), Prev: prevHash, Time: time.Now().UnixNano(), Nonce: 0, Namespace: "Players" }
   // block.CalculateHash()
-  pow := NewProof(block)
-  nonce, hash := Run(pow)
+  pow := newProof(block)
+  nonce, hash := run(pow)
   block.Hash = hash[:]
   block.Nonce = nonce
   return block
 }
 
-func Genesis() *Block {
+func genesis() *block {
   // text, _ := bcrypt.GenerateFromPassword( []byte("Hello, artifical world!") , 10)
-  return CreateBlock( "Hello, artifical world!", []byte{})
+  return createBlock( "Hello, artifical world!", []byte{})
 }
 
-func ToJson(thing player.Player) string {
+func toJson(thing player.Player) string {
   // fmt.Println("  ─────────────────────────────────────────────────────────────────────────────────────────────────────")
   b, err := json.Marshal(thing)
   if err != nil { fmt.Println(err) ; return "" }
@@ -52,11 +53,11 @@ func ToJson(thing player.Player) string {
   encoded := base64.StdEncoding.EncodeToString(b)
   // fmt.Println(encoded)
   // fmt.Println("   ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ──── ")
-  _ = FromJson(encoded, thing)
+  // _ = fromJson(encoded, thing)
   return encoded
 }
 
-func FromJson(code string, thing player.Player) player.Player {
+func fromJson(code string, thing player.Player) player.Player {
   copy := &thing
   decoded, _ := base64.StdEncoding.DecodeString(code)
   // fmt.Println(string(decoded))
@@ -83,7 +84,7 @@ func FromJson(code string, thing player.Player) player.Player {
 //   // fmt.Println(" ─┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
 // }
 
-func Serialize(b *Block) []byte {
+func serialize(b *block) []byte {
   var res bytes.Buffer
   encoder := gob.NewEncoder(&res)
   err := encoder.Encode(b)
@@ -91,8 +92,8 @@ func Serialize(b *Block) []byte {
   return res.Bytes()
 }
 
-func Deserialize(data []byte) *Block {
-  var block Block
+func deserialize(data []byte) *block {
+  var block block
   decoder := gob.NewDecoder(bytes.NewReader(data))
   err := decoder.Decode(&block)
   if err != nil { fmt.Println(err) }

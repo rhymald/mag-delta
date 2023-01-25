@@ -59,7 +59,7 @@ func main() {
           go func(){ act.Jinx(&You, &Target) }()
           Action = ""
         case "?":
-          go func(){ time.Sleep( time.Millisecond * time.Duration( 128 )) ; blockchain.ListBlocks(StatChain) }()
+          go func(){ time.Sleep( time.Millisecond * time.Duration( 128 )) ; blockchain.ListBlocks(StatChain, "Players") }()
           Action = ""
         default:
           time.Sleep( time.Millisecond * time.Duration( 128 ))
