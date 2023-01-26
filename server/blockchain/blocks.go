@@ -19,7 +19,7 @@ type block struct {
   Hash []byte
   Data []byte
   Prev []byte
-  Nonce int
+  Nonce int64
 }
 //
 // func (block *Block) CalculateHash() {

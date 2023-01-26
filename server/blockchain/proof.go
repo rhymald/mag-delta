@@ -8,7 +8,8 @@ import (
   "encoding/binary"
   "bytes"
   "crypto/sha512"
-  "math"
+  "crypto/rand"
+  // "math"
 )
 
 const PlayerDiff = 24 // playable players
@@ -28,7 +29,7 @@ func newProof(b *block) *pow {
   return &pow{Block: b, Target: target}
 }
 
-func initData(pow *pow, nonce int) []byte { return bytes.Join( [][]byte{ pow.Block.Data, pow.Block.Prev, bigToHex(int64(nonce)), bigToHex(int64(PlayerDiff)) }, []byte{} ) }
+func initData(pow *pow, nonce int64) []byte { return bytes.Join( [][]byte{ pow.Block.Data, pow.Block.Prev, bigToHex(nonce), bigToHex(int64(PlayerDiff)) }, []byte{} ) }
 
 func bigToHex(num int64) []byte {
   buff := new(bytes.Buffer)
@@ -36,25 +37,24 @@ func bigToHex(num int64) []byte {
   return buff.Bytes()
 }
 
-func run(pow *pow) (int, []byte) {
+func run(pow *pow) (int64, []byte) {
   var intHash big.Int
   var hash [64]byte
-  nonce := 0
-  for nonce < math.MaxInt64 {
-    data := initData(pow, nonce)
+  nonce := new(big.Int)
+  for {//nonce.Cmp(big.NewInt(math.MaxInt64)) == -1 {
+    randy := make([]byte, 64)
+    _,_ = rand.Read(randy)
+    nonce.SetBytes(randy)
+    data := initData(pow, int64(nonce.Uint64()))
     hash = sha512.Sum512(data)
     // fmt.Printf("\r%x", hash)
     // hash, _ = bcrypt.GenerateFromPassword( sum[:] , Difficulty)
     intHash.SetBytes(hash[:])
-    if intHash.Cmp(pow.Target) == -1 {
-      break
-    } else {
-      nonce++
-    }
+    if intHash.Cmp(pow.Target) == -1 { break }
   }
   // fmt.Println()
   // fin, _ := bcrypt.GenerateFromPassword( hash[:], Difficulty )
-  return nonce, hash[:]
+  return int64(nonce.Uint64()), hash[:]
 }
 
 func validate(pow *pow) bool {
