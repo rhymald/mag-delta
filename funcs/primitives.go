@@ -56,6 +56,7 @@ func ChancedRand(i int) float64 {
   return randy
 }
 
+func Rou(x float64, to float64) float64 { if to <= 0 { to = 1000 } ; return float64(ChancedRound(x*to))/to }
 func MeanStream(strs []Stream) Stream {
   mean := Stream{}
   for _, each := range strs { mean.Alt += 1/each.Alt ; mean.Cre += 1/each.Cre ; mean.Des += 1/each.Des }

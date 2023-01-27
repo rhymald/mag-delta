@@ -38,6 +38,12 @@ type Player struct {
   } `json:"Nature"`
 }
 
+func PlayerEmpower(player *Player, mean float64){ // immitation
+  buffer := *player
+  buffer.ID.Last = time.Now().UnixNano()
+  *player = buffer
+}
+
 func PlayerBorn(player *Player, mean float64){
   buffer := Player{}
   buffer.ID.NPC = false

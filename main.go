@@ -17,14 +17,15 @@ const DBPath = "./cache"
 
 var You player.Player
 var Target player.Player
+var StatChain *blockchain.BlockChain = blockchain.InitBlockChain(DBPath)
+
 var Action string
 var Keys chan string = make(chan string)
-var StatChain *blockchain.BlockChain = blockchain.InitBlockChain(DBPath)
 
 func init() {
   fmt.Println("\n\t\t  ", plot.Bar("Initializing...",8), "\n")
   player.PlayerBorn(&You,0)
-  go func() { for { blockchain.AddPlayer(StatChain, You) }}()
+  go func() { blockchain.AddPlayer(StatChain, You) ; for { blockchain.AddPlayer(StatChain, You) } }()
   client.PlayerStatus(You, Target)
   fmt.Println("\n\t\t", plot.Bar("Successfully login",1),"\n")
   player.FoeSpawn(&Target,0)
@@ -59,14 +60,14 @@ func main() {
           go func(){ act.Jinx(&You, &Target) }()
           Action = ""
         case "?":
-          go func(){ time.Sleep( time.Millisecond * time.Duration( 128 )) ; blockchain.ListBlocks(StatChain, "Players") }()
+          go func(){ time.Sleep( time.Millisecond * time.Duration( 128 )) ; pIDs := blockchain.ListBlocks(StatChain, "Players[]") ; _ = blockchain.ListBlocks(StatChain, pIDs[0]) }()
           Action = ""
         default:
           time.Sleep( time.Millisecond * time.Duration( 128 ))
       }
       // if Action=="a" { go func(){ act.Jinx(&You, &Target) }() ; Action = "" }
       // if Action=="?" { go func(){ time.Sleep( time.Millisecond * time.Duration( 128 )) ; blockchain.ListBlocks(StatChain) }() ; Action = "" }
-      if Target.Physical.Health.Current <= 0 { grow = grow*math.Cbrt(math.Phi) ; player.FoeSpawn(&Target, grow) ; plot.ShowMenu(Action)}// ; PlayerStatus(You, Target)}
+      if Target.Physical.Health.Current <= 0 { grow = grow*math.Cbrt(math.Phi) ; player.PlayerEmpower(&You, 0) ; player.FoeSpawn(&Target, grow) ; plot.ShowMenu(Action)}// ; PlayerStatus(You, Target)}
       time.Sleep( time.Millisecond * time.Duration( 128 ))
     }
   }()

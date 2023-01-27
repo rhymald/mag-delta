@@ -1,12 +1,12 @@
 package blockchain
 
 import (
-  "github.com/dgraph-io/badger"
   "fmt"
-  "encoding/base64"
-  "rhymald/mag-delta/player"
-  "rhymald/mag-delta/funcs"
-  "time"
+  "github.com/dgraph-io/badger"
+  // "encoding/base64"
+  // "rhymald/mag-delta/funcs"
+  // "rhymald/mag-delta/player"
+  // "time"
 )
 
 type BlockChain struct {
@@ -21,6 +21,29 @@ type bcIterator struct {
   Current []byte
 }
 
+// func CreateContextAfter() error {
+//   err = db.Update(func(txn *badger.Txn) error {
+//     // if there is no last hash in db
+//     if _, err := txn.Get([]byte("Initial")); err == badger.ErrKeyNotFound {
+//       fmt.Printf("Blockchain does not exist! Genereating...")
+//       genesis := genesis()
+//       fmt.Printf(" Writing...")
+//       err := txn.Set(genesis.Hash, serialize(genesis))
+//       if err != nil { fmt.Println(err) }
+//       err = txn.Set([]byte("Initial"), genesis.Hash) // link to last block inside db
+//       fmt.Printf(" Genesis block provided!\n")
+//       lastHash = genesis.Hash
+//       return err
+//     } else { // if exists
+//       item, err := txn.Get([]byte("Initial"))
+//       if err != nil { fmt.Println(err) }
+//       lastHash, err = item.ValueCopy([]byte("Initial")) // ???
+//       return err
+//     }
+//   })
+//   return err
+// }
+
 func InitBlockChain(dbPath string) *BlockChain {
   // return &BlockChain{[]*Block{Genesis()}}
   var lastHash []byte
@@ -32,20 +55,20 @@ func InitBlockChain(dbPath string) *BlockChain {
   // run writing query-connection
   err = db.Update(func(txn *badger.Txn) error {
     // if there is no last hash in db
-    if _, err := txn.Get([]byte("Players")); err == badger.ErrKeyNotFound {
+    if _, err := txn.Get([]byte("Initial")); err == badger.ErrKeyNotFound {
       fmt.Printf("Blockchain does not exist! Genereating...")
       genesis := genesis()
       fmt.Printf(" Writing...")
       err := txn.Set(genesis.Hash, serialize(genesis))
       if err != nil { fmt.Println(err) }
-      err = txn.Set([]byte("Players"), genesis.Hash) // link to last block inside db
+      err = txn.Set([]byte("Initial"), genesis.Hash) // link to last block inside db
       fmt.Printf(" Genesis block provided!\n")
       lastHash = genesis.Hash
       return err
     } else { // if exists
-      item, err := txn.Get([]byte("Players"))
+      item, err := txn.Get([]byte("Initial"))
       if err != nil { fmt.Println(err) }
-      lastHash, err = item.ValueCopy([]byte("Players")) // ???
+      lastHash, err = item.ValueCopy([]byte("Initial")) // ???
       return err
     }
   })
@@ -53,45 +76,32 @@ func InitBlockChain(dbPath string) *BlockChain {
   return &BlockChain{LastHash: lastHash, Database: db}
 }
 
-func AddPlayer(chain *BlockChain, player player.Player) {
-  player.Physical.Health.Current = 0
-  player.Nature.Pool.Dots = []funcs.Dot{}
-  player.Busy = false
-  dataString := toJson(player)
-  var lastHash []byte
-  // run read only txn (connection query)
+// upodate context
+func addBlock(chain *BlockChain, data string, lastHash []byte, namespace []byte) {
+  new := createBlock(data, string(namespace), lastHash, Diff[string(namespace)])
+  // get prev data
+  var prevData []byte
   err := chain.Database.View(func(txn *badger.Txn) error {
-    item, err := txn.Get([]byte("Players"))
+    item, err := txn.Get(lastHash)
     if err != nil { fmt.Println(err) }
-    lastHash, err = item.ValueCopy([]byte("Players"))
+    prevData, err = item.ValueCopy(lastHash)
     return err
   })
   if err != nil { fmt.Println(err) }
-  addBlock(chain, dataString, lastHash, []byte("Players"))
-}
-
-func addBlock(chain *BlockChain, data string, lastHash []byte, namespace []byte) {
-  // Player clean
-  // prevBlock := chain.Blocks[len(chain.Blocks)-1] // last block
-  // new := CreateBlock(datastring, prevBlock.Hash)
-  // if len(chain.Blocks) != 0 {
-  //   if datastring == string(chain.Blocks[len(chain.Blocks)-1].Data) { return } !!!
-  // }
-  // chain.Blocks = append(chain.Blocks, new)
-  // var lastHash []byte
-  // // run read only txn (connection query)
-  // err := chain.Database.View(func(txn *badger.Txn) error {
-  //   item, err := txn.Get(namespace)
-  //   if err != nil { fmt.Println(err) }
-  //   lastHash, err = item.ValueCopy(namespace)
-  //   return err
-  // })
-  // here +fetch
-  new := createBlock(data, lastHash)
-  err := chain.Database.Update(func(txn *badger.Txn) error {
+  prevBlock := deserialize(prevData)
+  // if == no write
+  if data == string(*&prevBlock.Data) { return }
+  // end if
+  err = chain.Database.Update(func(txn *badger.Txn) error {
     err := txn.Set(new.Hash, serialize(new))
     if err != nil { fmt.Println(err) }
-    err = txn.Set((namespace), new.Hash) // link to last block inside db
+    err = txn.Set((namespace), new.Hash)
+    if string(namespace) == "Players[]" { // auto create subNSs
+      rowName := fmt.Sprintf("Players[%.8X]", new.Hash)
+      err = txn.Set( []byte(rowName), new.Hash)
+      rowName = fmt.Sprintf("Session[%.8X]", new.Hash)
+      err = txn.Set( []byte(rowName), new.Hash)
+    }
     chain.LastHash = new.Hash
     return err
   })
@@ -112,31 +122,4 @@ func deeper(iter *bcIterator) *block {
   if err != nil { fmt.Println(err) }
   iter.Current = block.Prev // step back
   return block
-}
-
-func ListBlocks(chain *BlockChain, namespace string) {
-  iter := iterator(chain)
-  depth := 0
-  next := &block{Time: time.Now().UnixNano()}
-  // fmt.Println(" ─┼─┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────")
-  for i:=0; i<10; i++ {
-    each := deeper(iter)
-    if each.Namespace != namespace { break }
-    fmt.Printf("  │ %x\n", string(each.Hash))
-    fmt.Printf(" ─┼─── %d'", -depth)
-    fmt.Printf("%s", each.Namespace)
-    fmt.Printf(" ─── Time %d", each.Time)
-    fmt.Printf(" ─── Gape %0.3f s.", float64(each.Time-next.Time)/1000000000)
-    fmt.Printf(" ─── Nonce %d", each.Nonce)
-    fmt.Printf(" ─── Valid %v\n", validate(newProof(each)))
-    decoded, _ := base64.StdEncoding.DecodeString(string(each.Data))
-    fmt.Printf("  │ Data: \u001b[1m%s\n\u001b[0m", decoded)
-    fmt.Printf("  │ %x\n", each.Prev)
-    depth--
-    next = each
-    if len(each.Prev) == 0 { break }
-    // pow := NewProof(each)
-  }
-  fmt.Println("  │ \n")
-  // fmt.Println(" ─┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
 }
