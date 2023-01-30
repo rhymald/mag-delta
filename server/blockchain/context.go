@@ -47,14 +47,36 @@ func ListBlocks(chain *BlockChain, namespace string) []string {
   }
   // fmt.Println("  │ \n")
   fmt.Println(" ─┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n")
+  playerList := FindByPrefixes(chain, []byte("Session[00"))
   if namespace == "Players[]" {
     fmt.Println("    ─────────────────── Born blocks: ─────────────────────────────────────────────────────────────────────────────────────────────────────────")
     for _, link := range rows { fmt.Println(link) }
+    for _, each := range playerList { fmt.Println(string(each)) }
     fmt.Println("    ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
   }
   fmt.Println()
   if len(playerIDs) == 0 { playerIDs = append(playerIDs, "Players[]") }
   return playerIDs
+}
+
+func FindByPrefixes(chain *BlockChain, prefix []byte) [][]byte {
+  var playerList [][]byte
+  chain.Database.View( func(txn *badger.Txn) error {
+    iterator := txn.NewIterator(badger.DefaultIteratorOptions)
+    defer iterator.Close()
+    for iterator.Seek(prefix); iterator.ValidForPrefix(prefix); iterator.Next() {
+      item := iterator.Item()
+      key := item.Key()
+      err := item.Value(func (v []byte) error {
+        playerList = append(playerList, []byte(fmt.Sprintf("%s = %x", key, v)))
+        return nil
+      })
+      if err != nil { return err }
+    }
+    return nil
+  })
+  if len(playerList) == 0 { playerList = append(playerList, prefix) }
+  return playerList
 }
 
 func AddPlayer(chain *BlockChain, player player.Player) {

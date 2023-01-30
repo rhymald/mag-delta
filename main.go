@@ -24,8 +24,10 @@ var Keys chan string = make(chan string)
 
 func init() {
   fmt.Println("\n\t\t  ", plot.Bar("Initializing...",8), "\n")
-  player.PlayerBorn(&You,0)
-  go func() { blockchain.AddPlayer(StatChain, You) ; for { blockchain.AddPlayer(StatChain, You) } }()
+  // player.PlayerBorn(&You,1024) ; blockchain.AddPlayer(StatChain, You)
+  // player.PlayerBorn(&You,6) ; blockchain.AddPlayer(StatChain, You)
+  player.PlayerBorn(&You,0) ; blockchain.AddPlayer(StatChain, You)
+  go func() { for { blockchain.AddPlayer(StatChain, You) } }()
   client.PlayerStatus(You, Target)
   fmt.Println("\n\t\t", plot.Bar("Successfully login",1),"\n")
   player.FoeSpawn(&Target,0)

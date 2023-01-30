@@ -9,6 +9,7 @@ import (
   "time"
 )
 
+// need restruct: separate block of hp+mp+exp
 type Player struct {
   // For BlockChain
   ID struct {
