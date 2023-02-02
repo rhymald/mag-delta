@@ -12,6 +12,12 @@ import (
   // "math"
 )
 
+var Diff map[string]int = map[string]int{
+  "Initial": 12,
+  "Players[]": 8,
+  "NPC": 4,
+}
+
 // const InitialDiff = 32
 // const PlayerDiff = 24 // playable players
 // const PhenomenaeDiff = 20 // nature, weather and objects

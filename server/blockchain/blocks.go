@@ -3,11 +3,10 @@ package blockchain
 import (
   "bytes"
   // "crypto/sha512"
-  "encoding/json"
   "encoding/base64"
   "time"
   "fmt"
-  "rhymald/mag-delta/player"
+  // "rhymald/mag-delta/player"
   // "rhymald/mag-delta/funcs"
   "encoding/gob"
 )
@@ -32,21 +31,6 @@ func createBlock(data string, ns string, prevHash []byte, diff int) *block {
 
 func genesis() *block {
   return createBlock(base64.StdEncoding.EncodeToString([]byte("GENESIS BLOCK: ThickCat Concensus Protocol initialized. Hello, artifical World!")), "Initial", []byte{}, Diff["Initial"])
-}
-
-func toJson(thing player.BasicStats) string {
-  b, err := json.Marshal(thing)
-  if err != nil { fmt.Println(err) ; return "" }
-  encoded := base64.StdEncoding.EncodeToString(b)
-  return encoded
-}
-
-func fromJson(code string, thing player.BasicStats) player.BasicStats {
-  copy := &thing
-  decoded, _ := base64.StdEncoding.DecodeString(code)
-  err := json.Unmarshal(decoded, copy)
-  if err != nil { fmt.Println(err) ; return player.BasicStats{} }
-  return *copy
 }
 
 func serialize(b *block) []byte {
