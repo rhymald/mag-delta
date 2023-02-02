@@ -13,9 +13,9 @@ import (
 // +Punch(Da) +Sting(Ad) - [physicals]
 func Jinx(caster *player.Player, target *player.Player) {
   if *&caster.Busy { fmt.Printf("DEBUG[Cast][Jinx]: busy ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\n") ; return }
-  dotsForConsume := balance.Cast_Common_DotsPerString(caster.Nature.Stream) //Cre
-  pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Nature.Stream) //Alt
-  reach := 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Nature.Stream) // Des
+  dotsForConsume := balance.Cast_Common_DotsPerString(caster.Basics.Streams) //Cre
+  pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Basics.Streams) //Alt
+  reach := 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Basics.Streams) // Des
   damage := 0.0
   dotCounter := 0
   *&caster.Busy = true
@@ -28,13 +28,13 @@ func Jinx(caster *player.Player, target *player.Player) {
   }
   *&caster.Busy = false
   if balance.Cast_Common_Failed(dotsForConsume,dotCounter) {
-    fmt.Printf("DEBUG[Cast][Jinx]: cast failed ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\n") ; return
+    fmt.Printf("DEBUG[Cast][Jinx]: cast of %d dots failed ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\n", dotsForConsume) ; return
   } else {
-    fmt.Printf("DEBUG[Cast][Jinx][From]: %0.1f damage sent for %.0f ms░░░░░░░░░░░░░░░░░░░░░░░░░\n", damage, pause*float64(dotsForConsume))
+    fmt.Printf("DEBUG[Cast][Jinx][From]: %0.1f damage as %d sent for %.0f ms░░░░░░░░░░░░░░░░░░░░░░░░░\n", damage, dotsForConsume, pause*float64(dotsForConsume))
     go func(){
       time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
-      *&target.Physical.Health.Current += -damage*math.Sqrt(caster.Nature.Stream.Des/target.Nature.Resistance)
-      fmt.Printf("DEBUG[Cast][Jinx][ To ]: %0.1f damage received after %.0f ms ░░░░░░░░░░░░░░░░░░░\n", damage*math.Sqrt(caster.Nature.Stream.Des/target.Nature.Resistance), reach)
+      *&target.Physical.Health.Current += -damage*math.Sqrt(caster.Basics.Streams.Des/target.Nature.Resistance)
+      fmt.Printf("DEBUG[Cast][Jinx][ To ]: %0.1f damage received after %.0f ms ░░░░░░░░░░░░░░░░░░░\n", damage*math.Sqrt(caster.Basics.Streams.Des/target.Nature.Resistance), reach)
       if *&target.Physical.Health.Current < 0 { *&target.Physical.Health.Current = 0 }
     }()
   }

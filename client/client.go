@@ -9,7 +9,7 @@ import (
 
 func PlayerStatus(players ...player.Player) {
   it, foe, compare := players[0], player.Player{}, len(players) > 1
-  if players[1].Physical.Health.Current <= 0 || players[0].ID.NPC { compare = false }
+  if players[1].Physical.Health.Current <= 0 || players[0].Basics.ID.NPC { compare = false }
   if compare { foe = players[1] }
   playerTuple := [][]string{}
   fmt.Println(plot.Color("Player status",0),"[comparing to a foe]:")
@@ -34,43 +34,43 @@ func PlayerStatus(players ...player.Player) {
   if compare {
     line = fmt.Sprintf(
       " \nPhysical|Size\n  %0.3f \n [%0.3f]|Endurance\n  %0.3f \n [%0.3f]|Strength\n  %0.3f \n [%0.3f]",
-      it.Physical.Body.Cre,
-      foe.Physical.Body.Cre,
-      it.Physical.Body.Alt,
-      foe.Physical.Body.Alt,
-      it.Physical.Body.Des,
-      foe.Physical.Body.Des,
+      it.Basics.Body.Cre,
+      foe.Basics.Body.Cre,
+      it.Basics.Body.Alt,
+      foe.Basics.Body.Alt,
+      it.Basics.Body.Des,
+      foe.Basics.Body.Des,
     )
   } else {
     line = fmt.Sprintf(
       " \nPhysical|Size\n%0.3f|Endurance\n%0.3f|Strength\n%0.3f",
-      it.Physical.Body.Cre,
-      it.Physical.Body.Alt,
-      it.Physical.Body.Des,
+      it.Basics.Body.Cre,
+      it.Basics.Body.Alt,
+      it.Basics.Body.Des,
     )
   }
   playerTuple = plot.AddRow(line,playerTuple)
   if compare {
     line = fmt.Sprintf(
       " \n %s \n[%s]|Creation\n  %0.3f \n [%0.3f]|Alteration\n  %0.3f \n [%0.3f]|Destruction\n  %0.3f \n [%0.3f]|Resistance\n  %0.3f \n [%0.3f]",
-      it.Nature.Stream.Element,
-      foe.Nature.Stream.Element,
-      it.Nature.Stream.Cre,
-      foe.Nature.Stream.Cre,
-      it.Nature.Stream.Alt,
-      foe.Nature.Stream.Alt,
-      it.Nature.Stream.Des,
-      foe.Nature.Stream.Des,
+      it.Basics.Streams.Element,
+      foe.Basics.Streams.Element,
+      it.Basics.Streams.Cre,
+      foe.Basics.Streams.Cre,
+      it.Basics.Streams.Alt,
+      foe.Basics.Streams.Alt,
+      it.Basics.Streams.Des,
+      foe.Basics.Streams.Des,
       it.Nature.Resistance,
       foe.Nature.Resistance,
     )
   } else {
     line = fmt.Sprintf(
       "Element\n%s|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f",
-      it.Nature.Stream.Element,
-      it.Nature.Stream.Cre,
-      it.Nature.Stream.Alt,
-      it.Nature.Stream.Des,
+      it.Basics.Streams.Element,
+      it.Basics.Streams.Cre,
+      it.Basics.Streams.Alt,
+      it.Basics.Streams.Des,
     )
   }
   playerTuple = plot.AddRow(line,playerTuple)

@@ -6,7 +6,7 @@ import(
   "rhymald/mag-delta/player"
   "github.com/dgraph-io/badger"
   "encoding/base64"
-  "rhymald/mag-delta/funcs"
+  // "rhymald/mag-delta/funcs"
 )
 
 var Diff map[string]int = map[string]int{
@@ -79,12 +79,9 @@ func FindByPrefixes(chain *BlockChain, prefix []byte) [][]byte {
   return playerList
 }
 
-func AddPlayer(chain *BlockChain, player player.Player) {
+func AddPlayer(chain *BlockChain, player player.BasicStats) {
   // dummy := player.Player{}
   // dummy.ID = player.ID
-  player.Physical.Health.Current = -1
-  player.Nature.Pool.Dots = []funcs.Dot{}
-  player.Busy = false
   dataString := toJson(player)
   var lastHash []byte
   // run read only txn (connection query)

@@ -34,18 +34,18 @@ func genesis() *block {
   return createBlock(base64.StdEncoding.EncodeToString([]byte("GENESIS BLOCK: ThickCat Concensus Protocol initialized. Hello, artifical World!")), "Initial", []byte{}, Diff["Initial"])
 }
 
-func toJson(thing player.Player) string {
+func toJson(thing player.BasicStats) string {
   b, err := json.Marshal(thing)
   if err != nil { fmt.Println(err) ; return "" }
   encoded := base64.StdEncoding.EncodeToString(b)
   return encoded
 }
 
-func fromJson(code string, thing player.Player) player.Player {
+func fromJson(code string, thing player.BasicStats) player.BasicStats {
   copy := &thing
   decoded, _ := base64.StdEncoding.DecodeString(code)
   err := json.Unmarshal(decoded, copy)
-  if err != nil { fmt.Println(err) ; return player.Player{} }
+  if err != nil { fmt.Println(err) ; return player.BasicStats{} }
   return *copy
 }
 
