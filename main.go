@@ -21,18 +21,18 @@ var You player.Player
 var Target player.Player
 var StatChain *blockchain.BlockChain = blockchain.InitBlockChain(DBPath)
 
-var Action string
+var Frame plot.LogFrame = plot.CleanFrame()
 var Keys chan string = make(chan string)
 
 func init() {
   fmt.Println("\n\t\t  ", plot.Bar("Initializing...",8), "\n")
   // player.PlayerBorn(&You,1024) ; blockchain.AddPlayer(StatChain, You)
   // player.PlayerBorn(&You,6) ; blockchain.AddPlayer(StatChain, You)
-  player.PlayerBorn(&You,0) ; blockchain.AddPlayer(StatChain, You.Basics)
+  player.PlayerBorn(&You,0,&Frame.Player) ; blockchain.AddPlayer(StatChain, You.Basics)
   go func() { for { blockchain.AddPlayer(StatChain, You.Basics) } }()
   client.PlayerStatus(You, Target)
   fmt.Println("\n\t\t", plot.Bar("Successfully login",1),"\n")
-  player.FoeSpawn(&Target,0)
+  player.FoeSpawn(&Target,0,&Frame.Foe)
   client.PlayerStatus(You, Target)
   fmt.Println("\n\t     ",plot.Bar("Press [Enter] to continue",8),"\n")
   fmt.Scanln()
@@ -42,18 +42,14 @@ func main() {
   defer os.Exit(0)
   defer StatChain.Database.Close()
   plot.ShowMenu(" ")
-  client.PlayerStatus(You, Target)
   grow := math.Cbrt(math.Phi)
+  var b = make([]byte, 1)
   go func() {
     exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
     exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
-    var b = make([]byte, 1)
     for {
       os.Stdin.Read(b)
       Keys <- string(b)
-      plot.ShowMenu(string(b))
-      if string(b) != "?" { client.PlayerStatus(You, Target) }
-      time.Sleep( time.Millisecond * time.Duration( 128 ))
     }
   }()
   go func () {
@@ -61,19 +57,23 @@ func main() {
       Action, _ := <-Keys
       switch Action {
         case "a":
-          go func(){ act.Jinx(&You, &Target) }()
-          Action = ""
-        case "?":
-          go func(){ time.Sleep( time.Millisecond * time.Duration( 128 )) ; pIDs := blockchain.ListBlocks(StatChain, "Players[]") ; _ = blockchain.ListBlocks(StatChain, pIDs[0]) }()
+          go func(){ act.Jinx(&You, &Target, &Frame) }()
           Action = ""
         default:
-          time.Sleep( time.Millisecond * time.Duration( 128 ))
       }
-      // if Action=="a" { go func(){ act.Jinx(&You, &Target) }() ; Action = "" }
-      // if Action=="?" { go func(){ time.Sleep( time.Millisecond * time.Duration( 128 )) ; blockchain.ListBlocks(StatChain) }() ; Action = "" }
-      if Target.Status.Health <= 0 { player.PlayerEmpower(&You, 0) ; player.FoeSpawn(&Target, funcs.Vector(You.Basics.Streams.Cre,You.Basics.Streams.Alt,You.Basics.Streams.Des)/math.Sqrt2*grow-1) ; plot.ShowMenu(Action) ; client.PlayerStatus(You, Target)}// ; PlayerStatus(You, Target)}
-      time.Sleep( time.Millisecond * time.Duration( 128 ))
+      if Target.Status.Health <= 0 { player.PlayerEmpower(&You, 0) ; player.FoeSpawn(&Target, funcs.Vector(You.Basics.Streams.Cre,You.Basics.Streams.Alt,You.Basics.Streams.Des)/math.Sqrt2*grow-1, &Frame.Foe) }
     }
   }()
-  for { time.Sleep( time.Millisecond * time.Duration( 4096 )) }
+  for {
+    plot.Clean()
+    plot.ShowMenu(string(b))
+    if string(b) != "?" {
+      client.PlayerStatus(You, Target) ; plot.Frame(Frame)
+      time.Sleep( time.Millisecond * time.Duration( 128 ))
+    } else {
+      pIDs := blockchain.ListBlocks(StatChain, "Players[]")
+      _ = blockchain.ListBlocks(StatChain, pIDs[0])
+      time.Sleep( time.Millisecond * time.Duration( 2048 ))
+    }
+  }
 }

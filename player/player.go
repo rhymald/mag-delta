@@ -57,7 +57,7 @@ func CalculateAttributes_FromBasics(player *Player){
   *player = buffer
 }
 
-func PlayerBorn(player *Player, mean float64){
+func PlayerBorn(player *Player, mean float64, logger *string){
   buffer := Player{}
   buffer.Basics.ID.NPC = false
   buffer.Basics.ID.Born = funcs.Epoch()
@@ -67,10 +67,10 @@ func PlayerBorn(player *Player, mean float64){
   CalculateAttributes_FromBasics(&buffer)
   buffer.Status.Health = math.Sqrt(buffer.Attributes.Vitality+1)-1 //from db
   *player = buffer
-  go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body) }()
+  go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body, logger) }()
 }
 
-func FoeSpawn(foe *Player, mean float64) { // old, new+ template Stream{}
+func FoeSpawn(foe *Player, mean float64, logger *string) { // old, new+ template Stream{}
   buffer := Player{}
   buffer.Basics.ID.NPC = true
   buffer.Basics.ID.Born = funcs.Epoch()
@@ -80,10 +80,10 @@ func FoeSpawn(foe *Player, mean float64) { // old, new+ template Stream{}
   CalculateAttributes_FromBasics(&buffer)
   buffer.Status.Health = buffer.Attributes.Vitality / math.Sqrt2
   *foe = buffer
-  go func(){ Negeneration(&(*&foe.Status.Health), *&foe.Attributes.Vitality, *&foe.Attributes.Poolsize, *&foe.Basics.Body) }()
+  go func(){ Negeneration(&(*&foe.Status.Health), *&foe.Attributes.Vitality, *&foe.Attributes.Poolsize, *&foe.Basics.Body, logger) }()
 }
 
-func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64, stream funcs.Stream, body funcs.Stream) {
+func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64, stream funcs.Stream, body funcs.Stream, logger *string) {
   for {
     if max-float64(len(*pool))<1 { time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) } else {
       dot := balance.Regeneration_DotWeight_FromStream(stream)
@@ -92,19 +92,19 @@ func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64
       time.Sleep( time.Millisecond * time.Duration( pause ))
       //block
       if *health >= maxhp {
-        fmt.Printf("DEBUG[Player][Regeneration]: ░░░░░░░░░ for %0.3fs +%s %0.3f'e ░░░░░░░░░░░░░░░░░░\r", pause/1000, dot.Element, dot.Weight)
+        *logger = fmt.Sprintf("          for %0.3fs +%s %0.3f'e ", pause/1000, dot.Element, dot.Weight)
       } else {
-        fmt.Printf("DEBUG[Player][Regeneration]: %+0.3f'hp for %0.3fs +%s %0.3f'e ░░░░░░░░░░░░░░░░░░\r", heal, pause/1000, dot.Element, dot.Weight)
+        *logger = fmt.Sprintf("%+0.3f'hp for %0.3fs +%s %0.3f'e ", heal, pause/1000, dot.Element, dot.Weight)
       }
       *pool = append(*pool, dot )
-      if *health <= 0 { fmt.Printf("DEBUG[Player][Regeneration]: ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ You are Died ░░░░░░░░░\n") ; break }
+      if *health <= 0 { *logger = fmt.Sprintf("You are Died") ; break }
       if *health < maxhp { *health += heal } else { *health = maxhp }
       //unblock
     }
   }
 }
 
-func Negeneration(health *float64, maxhp float64, maxe float64, body funcs.Stream) {
+func Negeneration(health *float64, maxhp float64, maxe float64, body funcs.Stream, logger *string) {
   for {
     if maxhp<=*health { time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) } else {
       dot := balance.Regeneration_DotWeight_FromStream(body)
@@ -112,8 +112,8 @@ func Negeneration(health *float64, maxhp float64, maxe float64, body funcs.Strea
       heal := balance.Regeneration_Heal_FromBody(body)
       time.Sleep( time.Millisecond * time.Duration( pause ))
       //block
-      if *health < maxhp { fmt.Printf("DEBUG[ NPC  ][Regeneration]: %+0.3f'hp for %0.3fs ░░░░░░░░░░░░░░░░░░░░░░░░░\r", heal, pause/1000) }
-      if *health <= 0 { fmt.Printf("DEBUG[ NPC  ][Regeneration]: Foe died ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\n") ; break }
+      if *health < maxhp { *logger = fmt.Sprintf("Dummy: %+0.3f'hp for %0.3fs ", heal, pause/1000) }
+      if *health <= 0 { *logger = fmt.Sprintf("Dummy: Foe died ") ; break }
       if *health < maxhp { *health += heal } else { *health = maxhp }
       //unblock
     }

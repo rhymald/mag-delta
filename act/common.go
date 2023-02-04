@@ -4,6 +4,7 @@ import (
   "rhymald/mag-delta/funcs"
   "rhymald/mag-delta/balance"
   "rhymald/mag-delta/player"
+  "rhymald/mag-delta/client/plot"
   "math/rand"
   "math"
   "time"
@@ -11,8 +12,9 @@ import (
 )
 
 // +Punch(Da) +Sting(Ad) - [physicals]
-func Jinx(caster *player.Player, target *player.Player) {
-  if *&caster.Attributes.Busy { fmt.Printf("DEBUG[Cast][Jinx]: busy ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\n") ; return }
+func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
+  castId := time.Now().UnixNano() % 1000
+  if *&caster.Attributes.Busy { plot.AddAction(logs, fmt.Sprintf("[Cast %3d][Jinx]: player is busy", castId)) ; return }
   dotsForConsume := balance.Cast_Common_DotsPerString(caster.Basics.Streams) //Cre
   pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Basics.Streams) //Alt
   reach := 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Basics.Streams) // Des
@@ -28,13 +30,13 @@ func Jinx(caster *player.Player, target *player.Player) {
   }
   *&caster.Attributes.Busy = false
   if balance.Cast_Common_Failed(dotsForConsume,dotCounter) {
-    fmt.Printf("DEBUG[Cast][Jinx]: cast of %d dots failed ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\n", dotsForConsume) ; return
+    plot.AddAction(logs, fmt.Sprintf("[Cast %3d][Jinx]: cast of %d dots failed ", castId, dotsForConsume)) ; return
   } else {
-    fmt.Printf("DEBUG[Cast][Jinx][From]: %0.1f damage as %d sent for %.0f ms░░░░░░░░░░░░░░░░░░░░░░░░░\n", damage, dotsForConsume, pause*float64(dotsForConsume))
+    plot.AddAction(logs, fmt.Sprintf("[Cast %3d][Jinx][From]: %0.1f damage as %d sent for %.0f ms", castId, damage, dotsForConsume, pause*float64(dotsForConsume)))
     go func(){
       time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
       *&target.Status.Health += -damage*math.Sqrt(caster.Basics.Streams.Des/(target.Attributes.Resistances["Common"]+target.Attributes.Resistances[caster.Basics.Streams.Element]))
-      fmt.Printf("DEBUG[Cast][Jinx][ To ]: %0.1f damage received after %.0f ms ░░░░░░░░░░░░░░░░░░░\n", damage*math.Sqrt(caster.Basics.Streams.Des/(target.Attributes.Resistances["Common"]+target.Attributes.Resistances[caster.Basics.Streams.Element])), reach)
+      plot.AddAction(logs, fmt.Sprintf("[Cast %3d][Jinx][ To ]: %0.1f damage received after %.0f ms ", castId, damage*math.Sqrt(caster.Basics.Streams.Des/(target.Attributes.Resistances["Common"]+target.Attributes.Resistances[caster.Basics.Streams.Element])), reach))
       if *&target.Status.Health < 0 { *&target.Status.Health = 0 }
     }()
   }

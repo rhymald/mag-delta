@@ -109,8 +109,11 @@ func maxInCell(cell string) int {
 func Bar(text string, e int) string { return fmt.Sprintf("%s░▒▓█%s%s%s%s█▓▒░%s",E[e],R,text,E[0],E[e],E[0]) }
 func Color(text string, e int) string { return fmt.Sprintf("%s%s%s%s",E[e],B,text,E[0]) }
 
-func ShowMenu(key string) {
+func Clean(){
   fmt.Print("\033[H\033[2J")
+}
+
+func ShowMenu(key string) {
   fmt.Printf("\n\t\t ─┼─── %s ────────────\n", Color("Menu",0))
   // switch key {
   //   case "a":
