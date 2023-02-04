@@ -8,12 +8,14 @@ import (
   "rhymald/mag-delta/client"
   "rhymald/mag-delta/player"
   "rhymald/mag-delta/act"
+  "rhymald/mag-delta/funcs"
   "os"
   "os/exec"
   "time"
 )
 
 const DBPath = "./cache"
+const CacheAddr = "local"
 
 var You player.Player
 var Target player.Player
@@ -26,11 +28,11 @@ func init() {
   fmt.Println("\n\t\t  ", plot.Bar("Initializing...",8), "\n")
   // player.PlayerBorn(&You,1024) ; blockchain.AddPlayer(StatChain, You)
   // player.PlayerBorn(&You,6) ; blockchain.AddPlayer(StatChain, You)
-  player.PlayerBorn(&You,1024) ; blockchain.AddPlayer(StatChain, You.Basics)
+  player.PlayerBorn(&You,0) ; blockchain.AddPlayer(StatChain, You.Basics)
   go func() { for { blockchain.AddPlayer(StatChain, You.Basics) } }()
   client.PlayerStatus(You, Target)
   fmt.Println("\n\t\t", plot.Bar("Successfully login",1),"\n")
-  player.FoeSpawn(&Target,1024)
+  player.FoeSpawn(&Target,0)
   client.PlayerStatus(You, Target)
   fmt.Println("\n\t     ",plot.Bar("Press [Enter] to continue",8),"\n")
   fmt.Scanln()
@@ -41,7 +43,7 @@ func main() {
   defer StatChain.Database.Close()
   plot.ShowMenu(" ")
   client.PlayerStatus(You, Target)
-  grow := 1/math.Phi/math.Phi/math.Phi
+  grow := math.Cbrt(math.Phi)
   go func() {
     exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
     exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
@@ -69,7 +71,7 @@ func main() {
       }
       // if Action=="a" { go func(){ act.Jinx(&You, &Target) }() ; Action = "" }
       // if Action=="?" { go func(){ time.Sleep( time.Millisecond * time.Duration( 128 )) ; blockchain.ListBlocks(StatChain) }() ; Action = "" }
-      if Target.Physical.Health.Current <= 0 { grow = grow*math.Cbrt(math.Phi) ; player.PlayerEmpower(&You, 0) ; player.FoeSpawn(&Target, grow) ; plot.ShowMenu(Action)}// ; PlayerStatus(You, Target)}
+      if Target.Status.Health <= 0 { player.PlayerEmpower(&You, 0) ; player.FoeSpawn(&Target, funcs.Vector(You.Basics.Streams.Cre,You.Basics.Streams.Alt,You.Basics.Streams.Des)/math.Sqrt2*grow-1) ; plot.ShowMenu(Action) ; client.PlayerStatus(You, Target)}// ; PlayerStatus(You, Target)}
       time.Sleep( time.Millisecond * time.Duration( 128 ))
     }
   }()

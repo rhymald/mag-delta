@@ -9,7 +9,7 @@ import (
 
 func PlayerStatus(players ...player.Player) {
   it, foe, compare := players[0], player.Player{}, len(players) > 1
-  if players[1].Physical.Health.Current <= 0 || players[0].Basics.ID.NPC { compare = false }
+  if players[1].Status.Health <= 0 || players[0].Basics.ID.NPC { compare = false }
   if compare { foe = players[1] }
   playerTuple := [][]string{}
   fmt.Println(plot.Color("Player status",0),"[comparing to a foe]:")
@@ -17,17 +17,17 @@ func PlayerStatus(players ...player.Player) {
   if compare {
     line = fmt.Sprintf(
       "Health|Max: %0.0f|Current: %0.0f|Rate: %3.0f%%|[%3.0f%%]",
-      it.Physical.Health.Max,
-      it.Physical.Health.Current,
-      100*it.Physical.Health.Current/it.Physical.Health.Max,
-      100*foe.Physical.Health.Current/foe.Physical.Health.Max,
+      it.Attributes.Vitality,
+      it.Status.Health,
+      100*it.Status.Health/it.Attributes.Vitality,
+      100*foe.Status.Health/foe.Attributes.Vitality,
     )
   } else {
     line = fmt.Sprintf(
       "Health|Max: %0.0f|Current: %0.0f|Rate: %1.0f%%",
-      it.Physical.Health.Max,
-      it.Physical.Health.Current,
-      100*it.Physical.Health.Current/it.Physical.Health.Max,
+      it.Attributes.Vitality,
+      it.Status.Health,
+      100*it.Status.Health/it.Attributes.Vitality,
     )
   }
   playerTuple = plot.AddRow(line, playerTuple)
@@ -61,8 +61,8 @@ func PlayerStatus(players ...player.Player) {
       foe.Basics.Streams.Alt,
       it.Basics.Streams.Des,
       foe.Basics.Streams.Des,
-      it.Nature.Resistance,
-      foe.Nature.Resistance,
+      it.Attributes.Resistances[it.Basics.Streams.Element],
+      foe.Attributes.Resistances[foe.Basics.Streams.Element],
     )
   } else {
     line = fmt.Sprintf(
@@ -75,9 +75,9 @@ func PlayerStatus(players ...player.Player) {
   }
   playerTuple = plot.AddRow(line,playerTuple)
   if compare {
-    line = fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%|[%0.0f]", it.Nature.Pool.Max, len(it.Nature.Pool.Dots), 100*float64(len(it.Nature.Pool.Dots))/float64(it.Nature.Pool.Max), foe.Nature.Pool.Max )
+    line = fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%|[%0.0f]", it.Attributes.Poolsize, len(it.Status.Pool), 100*float64(len(it.Status.Pool))/float64(it.Attributes.Poolsize), foe.Attributes.Poolsize )
   } else {
-    line = fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", it.Nature.Pool.Max, len(it.Nature.Pool.Dots), 100*float64(len(it.Nature.Pool.Dots))/float64(it.Nature.Pool.Max) )
+    line = fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", it.Attributes.Poolsize, len(it.Status.Pool), 100*float64(len(it.Status.Pool))/float64(it.Attributes.Poolsize) )
   }
   playerTuple = plot.AddRow(line,playerTuple)
   plot.Table(playerTuple, false)

@@ -21,6 +21,8 @@ type Stream struct {
   Element string `json:"Element,omitempty"`
 }
 
+func Epoch() int64 { return (time.Now().UnixNano()-1317679200000000000) }
+
 func Rand() float64 {
   x := (time.Now().UnixNano())
   in_bytes := make([]byte, 8)

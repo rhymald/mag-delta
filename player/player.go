@@ -11,40 +11,16 @@ import (
 
 // need restruct: separate block of hp+mp+exp
 type Player struct {
-  Basics BasicStats `json:"Basics"`
-  // For BlockChain
-  // ID struct {
-  //   NPC bool `json:"NPC"`
-  //   Name string `json:"Name,omitempty"`
-  //   Date int64 `json:"Date,omitempty"`
-  //   Last int64 `json:"Last,omitempty"`
-  // } `json:"ID"`
-  // For actions
-  Busy bool `json:"Busy"`
-  // Physical
-  Physical struct {
-    Health struct {
-      Current float64 `json:"Current"`
-      Max float64 `json:"Max"`
-    } `json:"Health"`
-    // Body funcs.Stream `json:"Body"`
-  } `json:"Physical"`
-  // Energetical
-  Nature struct {
-    Resistance float64 `json:"Resistances,omitempty"`
-    // Stream funcs.Stream `json:"Stream"`
-    Pool struct {
-      Max float64 `json:"Max"`
-      Dots []funcs.Dot `json:"Dots,omitempty"`
-    } `json:"Pool"`
-  } `json:"Nature"`
+  Basics BasicStats `json:"Basics"` // from stats chain
+  Status CharStatus `json:"Status"` // from state chain
+  Attributes CharAttributes `json:"Attributes,omitepmty"`
 }
 
 type BasicStats struct {
   ID struct {
     NPC bool `json:"NPC"`
     Name string `json:"Name,omitempty"`
-    Date int64 `json:"Date,omitempty"`
+    Born int64 `json:"Born,omitempty"`
     Last int64 `json:"Last,omitempty"`
   } `json:"ID,omitempty"`
   Body funcs.Stream `json:"Body"`
@@ -52,10 +28,11 @@ type BasicStats struct {
   Items []funcs.Stream `json:"Items,omitempty"`
 } // ^ stored in stats/spawn chains
 type CharStatus struct { // +heats +exp +consumables
-  XYZ [3]float64 `json:"XYZ"`
   Health float64 `json:"Health"`
-  Barrier map[string]float64 `json:"Barrier,omitempty"`
-  Dots []funcs.Dot `json:"Dots,omitempty"`
+  Pool []funcs.Dot `json:"Pool,omitempty"`
+  Focus []string `json:"Focus,omitempty"` // 0 for target, 1+ other
+  XYZ [3]float64 `json:"XYZ"` // not used yet
+  Barrier map[string]float64 `json:"Barrier,omitempty"` // max hp mods per element
 } // ^ stored in status chain
 type CharAttributes struct { // +states
   Busy bool `json:"Busy,omitempty"`
@@ -66,38 +43,44 @@ type CharAttributes struct { // +states
 
 func PlayerEmpower(player *Player, mean float64){ // immitation
   buffer := *player
-  buffer.Basics.ID.Last = time.Now().UnixNano()
+  buffer.Basics.ID.Last = funcs.Epoch()
+  *player = buffer
+}
+
+func CalculateAttributes_FromBasics(player *Player){
+  buffer := *player
+  buffer.Attributes.Vitality = balance.BasicStats_MaxHP_FromBody(buffer.Basics.Body) // from db
+  resists := make(map[string]float64)
+  resists[buffer.Basics.Streams.Element] = balance.BasicStats_Resistance_FromStream(buffer.Basics.Streams)
+  buffer.Attributes.Resistances = resists
+  buffer.Attributes.Poolsize = balance.BasicStats_MaxPool_FromStream(buffer.Basics.Streams)
   *player = buffer
 }
 
 func PlayerBorn(player *Player, mean float64){
   buffer := Player{}
   buffer.Basics.ID.NPC = false
-  buffer.Basics.ID.Date = time.Now().UnixNano()
-  buffer.Basics.ID.Last = time.Now().UnixNano()
+  buffer.Basics.ID.Born = funcs.Epoch()
+  buffer.Basics.ID.Last = funcs.Epoch()
   buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Physical")
-  buffer.Physical.Health.Max = balance.BasicStats_MaxHP_FromBody(buffer.Basics.Body) // from db
-  buffer.Physical.Health.Current = math.Sqrt(buffer.Physical.Health.Max+1)-1 //from db
   buffer.Basics.Streams = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, "Common")
-  buffer.Nature.Resistance = balance.BasicStats_Resistance_FromStream(buffer.Basics.Streams)
-  buffer.Nature.Pool.Max = balance.BasicStats_MaxPool_FromStream(buffer.Basics.Streams)
+  CalculateAttributes_FromBasics(&buffer)
+  buffer.Status.Health = math.Sqrt(buffer.Attributes.Vitality+1)-1 //from db
   *player = buffer
-  go func(){ Regeneration(&(*&player.Nature.Pool.Dots), &(*&player.Physical.Health.Current), *&player.Nature.Pool.Max, *&player.Physical.Health.Max, *&player.Basics.Streams, *&player.Basics.Body) }()
+  go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body) }()
 }
 
-func FoeSpawn(foe *Player, mean float64) {
+func FoeSpawn(foe *Player, mean float64) { // old, new+ template Stream{}
   buffer := Player{}
   buffer.Basics.ID.NPC = true
-  buffer.Basics.ID.Date = time.Now().UnixNano()
-  buffer.Basics.ID.Last = time.Now().UnixNano()
+  buffer.Basics.ID.Born = funcs.Epoch()
+  buffer.Basics.ID.Last = funcs.Epoch()
   buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Physical")
-  buffer.Physical.Health.Max = balance.BasicStats_MaxHP_FromBody(buffer.Basics.Body) // from db
-  buffer.Physical.Health.Current = buffer.Physical.Health.Max / math.Sqrt2 //from db
   buffer.Basics.Streams = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, "Common")
-  buffer.Nature.Resistance = balance.BasicStats_Resistance_FromStream(buffer.Basics.Streams)
-  buffer.Nature.Pool.Max = balance.BasicStats_MaxPool_FromStream(buffer.Basics.Streams)
+  CalculateAttributes_FromBasics(&buffer)
+  buffer.Status.Health = buffer.Attributes.Vitality / math.Sqrt2
   *foe = buffer
-  go func(){ Negeneration(&(*&foe.Physical.Health.Current), *&foe.Physical.Health.Max, *&foe.Nature.Pool.Max, *&foe.Basics.Body) }()
+  go func(){ Negeneration(&(*&foe.Status.Health), *&foe.Attributes.Vitality, *&foe.Attributes.Poolsize, *&foe.Basics.Body) }()
 }
 
 func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64, stream funcs.Stream, body funcs.Stream) {
