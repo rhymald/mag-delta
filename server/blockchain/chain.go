@@ -76,20 +76,20 @@ func InitBlockChain(dbPath string) *BlockChain {
   // run writing query-connection
   err = db.Update(func(txn *badger.Txn) error {
     // if there is no last hash in db
-    if _, err := txn.Get([]byte("Root")); err == badger.ErrKeyNotFound {
+    if _, err := txn.Get([]byte("/")); err == badger.ErrKeyNotFound {
       fmt.Printf("Blockchain does not exist! Genereating...")
       genesis := genesis()
       fmt.Printf(" Writing...")
       err := txn.Set(genesis.Hash, serialize(genesis))
       if err != nil { fmt.Println(err) }
-      err = txn.Set([]byte("Root"), genesis.Hash) // link to last block inside db
+      err = txn.Set([]byte("/"), genesis.Hash) // link to last block inside db
       fmt.Printf(" Genesis block provided!\n")
       lastHash = genesis.Hash
       return err
     } else { // if exists
-      item, err := txn.Get([]byte("Root"))
+      item, err := txn.Get([]byte("/"))
       if err != nil { fmt.Println(err) }
-      lastHash, err = item.ValueCopy([]byte("Root")) // ???
+      lastHash, err = item.ValueCopy([]byte("/")) // ???
       return err
     }
   })
@@ -117,10 +117,10 @@ func AddBlock(chain *BlockChain, data string, lastHash []byte, namespace []byte)
     err := txn.Set(new.Hash, serialize(new))
     if err != nil { fmt.Println(err) }
     err = txn.Set((namespace), new.Hash)
-    if string(namespace) == "Players[]" { // auto create subNSs
-      rowName := fmt.Sprintf("Players[%.8X]", new.Hash)
+    if string(namespace) == "/Players" { // auto create subNSs
+      rowName := fmt.Sprintf("/Players/%.8X", new.Hash)
       err = txn.Set( []byte(rowName), new.Hash)
-      rowName = fmt.Sprintf("Session[%.8X]", new.Hash)
+      rowName = fmt.Sprintf("/Players/%.8X/Session", new.Hash)
       err = txn.Set( []byte(rowName), new.Hash)
     }
     chain.LastHash = new.Hash
@@ -146,7 +146,7 @@ func deeper(iter *bcIterator) *block {
 }
 
 func ListBlocks(chain *BlockChain, namespace string) []string {
-  var rows []string
+  // var rows []string
   var playerIDs []string
   iter := iterator(chain)
   depth := 0
@@ -159,9 +159,9 @@ func ListBlocks(chain *BlockChain, namespace string) []string {
     fmt.Printf(" ─┼─── %d'", -depth)
     fmt.Printf("\u001b[1m%s\u001b[0m", each.Namespace)
     fmt.Printf(" ─── \u001b[1mTime\u001b[0m %d", each.Time)
-    if each.Namespace == "Players[]" {
-      rows = append(rows, fmt.Sprintf("Players[%.8X] = %x", each.Hash, each.Hash))
-      playerIDs = append(playerIDs, fmt.Sprintf("Players[%.8X]", each.Hash))
+    if each.Namespace == "/Players" {
+      // rows = append(rows, fmt.Sprintf("/Players/%.8X = %x", each.Hash, each.Hash))
+      playerIDs = append(playerIDs, fmt.Sprintf("/Players/%.8X", each.Hash))
     }
     fmt.Printf(" ─── \u001b[1mGape\u001b[0m %0.3fs.", float64(each.Time-next.Time)/1000000000)
     fmt.Printf(" ─── \u001b[1mNonce\u001b[0m %d", each.Nonce)
@@ -177,14 +177,14 @@ func ListBlocks(chain *BlockChain, namespace string) []string {
   }
   // fmt.Println("  │ \n")
   fmt.Println(" ─┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n")
-  playerList := FindByPrefixes(chain, []byte("Session[00"))
-  if namespace == "Players[]" {
-    fmt.Println("    ─────────────────── Born blocks: ─────────────────────────────────────────────────────────────────────────────────────────────────────────")
-    for _, link := range rows { fmt.Println(link) }
+  playerList := FindByPrefixes(chain, []byte("/"))
+  if namespace == "/Players" {
+    fmt.Println("    ─────────────────── Metadata info ────────────────────────────────────────────────────────────────────────────────────────────────────────")
+    // for _, link := range rows { fmt.Println(link) }
     for _, each := range playerList { fmt.Println(string(each)) }
     fmt.Println("    ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
   }
   fmt.Println()
-  if len(playerIDs) == 0 { playerIDs = append(playerIDs, "Players[]") }
+  if len(playerIDs) == 0 { playerIDs = append(playerIDs, "/Players") }
   return playerIDs
 }

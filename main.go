@@ -72,7 +72,7 @@ func main() {
       client.PlayerStatus(You, Target) ; plot.Frame(Frame)
       time.Sleep( time.Millisecond * time.Duration( 128 ))
     } else {
-      pIDs := blockchain.ListBlocks(StatChain, "Players[]")
+      pIDs := blockchain.ListBlocks(StatChain, "/Players")
       _ = blockchain.ListBlocks(StatChain, pIDs[0])
       time.Sleep( time.Millisecond * time.Duration( 2048 ))
     }

@@ -13,9 +13,9 @@ import (
 )
 
 var Diff map[string]int = map[string]int{
-  "Initial": 12,
-  "Players[]": 8,
-  "NPC": 4,
+  "/": 12,
+  "/Players": 8,
+  "/NPC": 4,
 }
 
 // const InitialDiff = 32

@@ -15,24 +15,24 @@ func AddPlayer(chain *blockchain.BlockChain, player player.BasicStats) {
   var lastHash []byte
   // run read only txn (connection query)
   err := chain.Database.View(func(txn *badger.Txn) error {
-    item, err := txn.Get([]byte("Players[]"))
+    item, err := txn.Get([]byte("/Players"))
     if err != nil { fmt.Println(err) }
     if err == badger.ErrKeyNotFound {
       fmt.Println(err)
       fmt.Printf("Context \"Players\" does not exist! Genereating...")
       err = chain.Database.View(func(txn *badger.Txn) error {
-        item, err := txn.Get([]byte("Root"))
+        item, err := txn.Get([]byte("/"))
         if err != nil { fmt.Println(err) }
-        lastHash, err = item.ValueCopy([]byte("Root"))
+        lastHash, err = item.ValueCopy([]byte("/"))
         return err
       })
     } else {
-      lastHash, err = item.ValueCopy([]byte("Players[]")) // here!
+      lastHash, err = item.ValueCopy([]byte("/Players")) // here!
     }
     return err
   })
   if err != nil { fmt.Println(err) }
-  blockchain.AddBlock(chain, dataString, lastHash, []byte("Players[]"))
+  blockchain.AddBlock(chain, dataString, lastHash, []byte("/Players"))
 }
 
 func toJson(thing player.BasicStats) string {

@@ -30,7 +30,7 @@ func createBlock(data string, ns string, prevHash []byte, diff int) *block {
 }
 
 func genesis() *block {
-  return createBlock(base64.StdEncoding.EncodeToString([]byte("GENESIS BLOCK: ThickCat Concensus Protocol initialized. Hello, artifical World!")), "Initial", []byte{}, Diff["Initial"])
+  return createBlock(base64.StdEncoding.EncodeToString([]byte("GENESIS BLOCK: ThickCat Concensus Protocol initialized. Hello, artifical World!")), "/", []byte{}, Diff["/"])
 }
 
 func serialize(b *block) []byte {
