@@ -76,20 +76,20 @@ func InitBlockChain(dbPath string) *BlockChain {
   // run writing query-connection
   err = db.Update(func(txn *badger.Txn) error {
     // if there is no last hash in db
-    if _, err := txn.Get([]byte("Initial")); err == badger.ErrKeyNotFound {
+    if _, err := txn.Get([]byte("Root")); err == badger.ErrKeyNotFound {
       fmt.Printf("Blockchain does not exist! Genereating...")
       genesis := genesis()
       fmt.Printf(" Writing...")
       err := txn.Set(genesis.Hash, serialize(genesis))
       if err != nil { fmt.Println(err) }
-      err = txn.Set([]byte("Initial"), genesis.Hash) // link to last block inside db
+      err = txn.Set([]byte("Root"), genesis.Hash) // link to last block inside db
       fmt.Printf(" Genesis block provided!\n")
       lastHash = genesis.Hash
       return err
     } else { // if exists
-      item, err := txn.Get([]byte("Initial"))
+      item, err := txn.Get([]byte("Root"))
       if err != nil { fmt.Println(err) }
-      lastHash, err = item.ValueCopy([]byte("Initial")) // ???
+      lastHash, err = item.ValueCopy([]byte("Root")) // ???
       return err
     }
   })
@@ -98,7 +98,7 @@ func InitBlockChain(dbPath string) *BlockChain {
 }
 
 // upodate context
-func addBlock(chain *BlockChain, data string, lastHash []byte, namespace []byte) {
+func AddBlock(chain *BlockChain, data string, lastHash []byte, namespace []byte) {
   new := createBlock(data, string(namespace), lastHash, Diff[string(namespace)])
   // get prev data
   var prevData []byte

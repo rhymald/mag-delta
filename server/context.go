@@ -1,15 +1,16 @@
-package blockchain
+package server
 
 import(
   "fmt"
   "rhymald/mag-delta/player"
+  "rhymald/mag-delta/server/blockchain"
   "github.com/dgraph-io/badger"
   "encoding/base64"
   "encoding/json"
   // "rhymald/mag-delta/funcs"
 )
 
-func AddPlayer(chain *BlockChain, player player.BasicStats) {
+func AddPlayer(chain *blockchain.BlockChain, player player.BasicStats) {
   dataString := toJson(player)
   var lastHash []byte
   // run read only txn (connection query)
@@ -20,9 +21,9 @@ func AddPlayer(chain *BlockChain, player player.BasicStats) {
       fmt.Println(err)
       fmt.Printf("Context \"Players\" does not exist! Genereating...")
       err = chain.Database.View(func(txn *badger.Txn) error {
-        item, err := txn.Get([]byte("Initial"))
+        item, err := txn.Get([]byte("Root"))
         if err != nil { fmt.Println(err) }
-        lastHash, err = item.ValueCopy([]byte("Initial"))
+        lastHash, err = item.ValueCopy([]byte("Root"))
         return err
       })
     } else {
@@ -31,7 +32,7 @@ func AddPlayer(chain *BlockChain, player player.BasicStats) {
     return err
   })
   if err != nil { fmt.Println(err) }
-  addBlock(chain, dataString, lastHash, []byte("Players[]"))
+  blockchain.AddBlock(chain, dataString, lastHash, []byte("Players[]"))
 }
 
 func toJson(thing player.BasicStats) string {
