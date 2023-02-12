@@ -13,9 +13,9 @@ import (
 )
 
 var Diff map[string]int = map[string]int{
-  "/": 12,
-  "/Players": 8,
-  "/NPC": 4,
+  "/": 3,
+  "/Players": 2,
+  "/NPC": 1,
 }
 
 // const InitialDiff = 32
@@ -32,7 +32,7 @@ type pow struct {
 
 func newProof(b *block, diff int) *pow {
   target := big.NewInt( 1 )
-  target.Lsh(target, uint(512-diff))
+  target.Lsh(target, uint(512-diff*4))
   return &pow{Block: b, Target: target}
 }
 

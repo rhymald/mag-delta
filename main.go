@@ -30,7 +30,7 @@ func init() {
   // player.PlayerBorn(&You,1024) ; blockchain.AddPlayer(StatChain, You)
   // player.PlayerBorn(&You,6) ; blockchain.AddPlayer(StatChain, You)
   player.PlayerBorn(&You,0,&Frame.Player) ; server.AddPlayer(StatChain, You.Basics)
-  go func() { for { server.AddPlayer(StatChain, You.Basics) } }()
+  go func() { for { server.UpdPlayerStats(StatChain, You.Basics) } }()
   client.PlayerStatus(You, Target)
   fmt.Println("\n\t\t", plot.Bar("Successfully login",1),"\n")
   player.FoeSpawn(&Target,0,&Frame.Foe)
@@ -43,7 +43,7 @@ func main() {
   defer os.Exit(0)
   defer StatChain.Database.Close()
   plot.ShowMenu(" ")
-  grow := math.Cbrt(math.Phi)
+  grow := math.Cbrt(math.Phi)-1
   var b = make([]byte, 1)
   go func() {
     exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
@@ -62,7 +62,7 @@ func main() {
           Action = ""
         default:
       }
-      if Target.Status.Health <= 0 { player.PlayerEmpower(&You, 0) ; player.FoeSpawn(&Target, funcs.Vector(You.Basics.Streams.Cre,You.Basics.Streams.Alt,You.Basics.Streams.Des)/math.Sqrt2*grow-1, &Frame.Foe) }
+      if Target.Status.Health <= 0 { player.PlayerEmpower(&You, 0) ; player.FoeSpawn(&Target, (funcs.Vector(You.Basics.Streams.Cre,You.Basics.Streams.Alt,You.Basics.Streams.Des)/math.Sqrt(3)-1)+grow, &Frame.Foe) }
     }
   }()
   for {

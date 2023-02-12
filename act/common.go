@@ -6,7 +6,7 @@ import (
   "rhymald/mag-delta/player"
   "rhymald/mag-delta/client/plot"
   "math/rand"
-  "math"
+  // "math"
   "time"
   "fmt"
 )
@@ -14,7 +14,7 @@ import (
 // +Punch(Da) +Sting(Ad) - [physicals]
 func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
   castId := time.Now().UnixNano() % 1000
-  if *&caster.Attributes.Busy { plot.AddAction(logs, fmt.Sprintf("[Cast %3d][Jinx]: player is busy", castId)) ; return }
+  if *&caster.Attributes.Busy { plot.AddAction(logs, fmt.Sprintf("[Cast][Jinx %3d]: player is busy", castId)) ; return }
   dotsForConsume := balance.Cast_Common_DotsPerString(caster.Basics.Streams) //Cre
   pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Basics.Streams) //Alt
   reach := 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Basics.Streams) // Des
@@ -30,13 +30,13 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
   }
   *&caster.Attributes.Busy = false
   if balance.Cast_Common_Failed(dotsForConsume,dotCounter) {
-    plot.AddAction(logs, fmt.Sprintf("[Cast %3d][Jinx]: cast of %d dots failed ", castId, dotsForConsume)) ; return
+    plot.AddAction(logs, fmt.Sprintf("[Cast][Jinx %3d]: cast of %d dots failed ", castId, dotsForConsume)) ; return
   } else {
-    plot.AddAction(logs, fmt.Sprintf("[Cast %3d][Jinx][From]: %0.1f damage as %d sent for %.0f ms", castId, damage, dotsForConsume, pause*float64(dotsForConsume)))
+    plot.AddAction(logs, fmt.Sprintf("[Cast][Jinx %3d][From]: %0.1f damage as %d sent for %.0f ms", castId, damage, dotsForConsume, pause*float64(dotsForConsume)))
     go func(){
       time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
-      *&target.Status.Health += -damage*math.Sqrt(caster.Basics.Streams.Des/(target.Attributes.Resistances["Common"]+target.Attributes.Resistances[caster.Basics.Streams.Element]))
-      plot.AddAction(logs, fmt.Sprintf("[Cast %3d][Jinx][ To ]: %0.1f damage received after %.0f ms ", castId, damage*math.Sqrt(caster.Basics.Streams.Des/(target.Attributes.Resistances["Common"]+target.Attributes.Resistances[caster.Basics.Streams.Element])), reach))
+      *&target.Status.Health += -damage*(caster.Basics.Streams.Des/(target.Attributes.Resistances[caster.Basics.Streams.Element]))
+      plot.AddAction(logs, fmt.Sprintf("[Cast][Jinx %3d][ To ]: %0.1f damage received after %.0f ms ", castId, damage*(caster.Basics.Streams.Des/(target.Attributes.Resistances[caster.Basics.Streams.Element])), reach))
       if *&target.Status.Health < 0 { *&target.Status.Health = 0 }
     }()
   }

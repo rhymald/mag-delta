@@ -54,7 +54,7 @@ func FindByPrefixes(chain *BlockChain, prefix []byte) [][]byte {
       item := iterator.Item()
       key := item.Key()
       err := item.Value(func (v []byte) error {
-        playerList = append(playerList, []byte(fmt.Sprintf("%s = %x", key, v)))
+        playerList = append(playerList, []byte(fmt.Sprintf("\u001b[1m%s\u001b[0m %x", key, v)))
         return nil
       })
       if err != nil { return err }
@@ -98,8 +98,10 @@ func InitBlockChain(dbPath string) *BlockChain {
 }
 
 // upodate context
-func AddBlock(chain *BlockChain, data string, lastHash []byte, namespace []byte) {
-  new := createBlock(data, string(namespace), lastHash, Diff[string(namespace)])
+func AddBlock(chain *BlockChain, data string, lastHash []byte, namespace []byte, id string) {
+  player := string(namespace)
+  if id == player { player = "/Players" }
+  new := createBlock(data, string(namespace), lastHash, Diff[player])
   // get prev data
   var prevData []byte
   err := chain.Database.View(func(txn *badger.Txn) error {
@@ -118,9 +120,9 @@ func AddBlock(chain *BlockChain, data string, lastHash []byte, namespace []byte)
     if err != nil { fmt.Println(err) }
     err = txn.Set((namespace), new.Hash)
     if string(namespace) == "/Players" { // auto create subNSs
-      rowName := fmt.Sprintf("/Players/%.8X", new.Hash)
+      rowName := id
       err = txn.Set( []byte(rowName), new.Hash)
-      rowName = fmt.Sprintf("/Players/%.8X/Session", new.Hash)
+      rowName = fmt.Sprintf("%s/Session", id)
       err = txn.Set( []byte(rowName), new.Hash)
     }
     chain.LastHash = new.Hash
@@ -151,40 +153,38 @@ func ListBlocks(chain *BlockChain, namespace string) []string {
   iter := iterator(chain)
   depth := 0
   next := &block{Time: time.Now().UnixNano(), Namespace: namespace}
-  fmt.Println(" ─┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
+  fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
   for i:=0; i<10; i++ {
     each := deeper(iter)
-    if each.Namespace != next.Namespace { fmt.Printf(" ─┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── \n") }
-    fmt.Printf("  │ \u001b[1m%x\u001b[0m\n", string(each.Hash))
-    fmt.Printf(" ─┼─── %d'", -depth)
+    if each.Namespace != next.Namespace { fmt.Printf("────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n") }
+    fmt.Printf("\u001b[1m%x\u001b[0m\n", string(each.Hash))
+    fmt.Printf("   %d'", -depth)
     fmt.Printf("\u001b[1m%s\u001b[0m", each.Namespace)
-    fmt.Printf(" ─── \u001b[1mTime\u001b[0m %d", each.Time)
+    fmt.Printf(" \u001b[1mTime\u001b[0m %d", each.Time)
     if each.Namespace == "/Players" {
       // rows = append(rows, fmt.Sprintf("/Players/%.8X = %x", each.Hash, each.Hash))
       playerIDs = append(playerIDs, fmt.Sprintf("/Players/%.8X", each.Hash))
     }
-    fmt.Printf(" ─── \u001b[1mGape\u001b[0m %0.3fs.", float64(each.Time-next.Time)/1000000000)
-    fmt.Printf(" ─── \u001b[1mNonce\u001b[0m %d", each.Nonce)
-    fmt.Printf(" ─── \u001b[1mValid\u001b[0m %v\n", validate(newProof(each, Diff[each.Namespace])))
+    fmt.Printf(" \u001b[1mGape\u001b[0m %0.3fs.", float64(each.Time-next.Time)/1000000000)
+    fmt.Printf(" \u001b[1mNonce\u001b[0m %d", each.Nonce)
+    fmt.Printf(" \u001b[1mValid\u001b[0m %v\n", validate(newProof(each, Diff[each.Namespace])))
     decoded, _ := base64.StdEncoding.DecodeString(string(each.Data))
-    fmt.Printf("  │ \u001b[1mData\u001b[0m %s\n", decoded)
-    // fmt.Printf("  │ %x\n", each.Prev)
+    fmt.Printf("\u001b[1mData\u001b[0m %s\n", decoded)
+    // fmt.Printf("%x\n", each.Prev)
     // if each.Namespace != namespace { break }
     depth--
-    if len(each.Prev) == 0 { break } else { fmt.Printf("  │ %x\n", each.Prev) }
+    if len(each.Prev) == 0 { break } else { fmt.Printf("%x\n", each.Prev) }
     next = each
     // pow := NewProof(each)
   }
-  // fmt.Println("  │ \n")
-  fmt.Println(" ─┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n")
+  fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
   playerList := FindByPrefixes(chain, []byte("/"))
   if namespace == "/Players" {
-    fmt.Println("    ─────────────────── Metadata info ────────────────────────────────────────────────────────────────────────────────────────────────────────")
-    // for _, link := range rows { fmt.Println(link) }
+    fmt.Println("\n ─── Metadata info ────────────── ")
+    // for _, link := range playerIDs { fmt.Println(link) }
     for _, each := range playerList { fmt.Println(string(each)) }
-    fmt.Println("    ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
+    fmt.Println(" ──────────────────────────────── \n")
   }
-  fmt.Println()
   if len(playerIDs) == 0 { playerIDs = append(playerIDs, "/Players") }
   return playerIDs
 }
