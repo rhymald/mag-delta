@@ -22,29 +22,6 @@ type bcIterator struct {
   Current []byte
 }
 
-// func CreateContextAfter() error {
-//   err = db.Update(func(txn *badger.Txn) error {
-//     // if there is no last hash in db
-//     if _, err := txn.Get([]byte("Initial")); err == badger.ErrKeyNotFound {
-//       fmt.Printf("Blockchain does not exist! Genereating...")
-//       genesis := genesis()
-//       fmt.Printf(" Writing...")
-//       err := txn.Set(genesis.Hash, serialize(genesis))
-//       if err != nil { fmt.Println(err) }
-//       err = txn.Set([]byte("Initial"), genesis.Hash) // link to last block inside db
-//       fmt.Printf(" Genesis block provided!\n")
-//       lastHash = genesis.Hash
-//       return err
-//     } else { // if exists
-//       item, err := txn.Get([]byte("Initial"))
-//       if err != nil { fmt.Println(err) }
-//       lastHash, err = item.ValueCopy([]byte("Initial")) // ???
-//       return err
-//     }
-//   })
-//   return err
-// }
-
 func FindByPrefixes(chain *BlockChain, prefix []byte) [][]byte {
   var playerList [][]byte
   chain.Database.View( func(txn *badger.Txn) error {
@@ -100,10 +77,10 @@ func InitBlockChain(dbPath string) *BlockChain {
 }
 
 // upodate context
-func AddBlock(chain *BlockChain, data string) {
-  namespace := "/"
-  lastHash := chain.LastHash[namespace]
+func AddBlock(chain *BlockChain, data string, namespace string) []byte {
+  // namespace := "/"
   // ^ immitation
+  lastHash := chain.LastHash[namespace]
   new := createBlock(data, namespace, lastHash, Diff[namespace])
   var prevData []byte
   err := chain.Database.View(func(txn *badger.Txn) error {
@@ -114,17 +91,18 @@ func AddBlock(chain *BlockChain, data string) {
   })
   if err != nil { fmt.Println(err) }
   prevBlock := deserialize(prevData)
-  if data == string(*&prevBlock.Data) { return }
+  if data == string(*&prevBlock.Data) { return []byte{} }
   err = chain.Database.Update(func(txn *badger.Txn) error {
     err := txn.Set(new.Hash, serialize(new))
     if err != nil { fmt.Println(err) }
     // update context
-    err = txn.Set([]byte(namespace), new.Hash)
-    chain.LastHash[namespace] = new.Hash
+    // err = txn.Set([]byte(namespace), new.Hash)
+    // chain.LastHash[namespace] = new.Hash
     // ^ updated context
     return err
   })
   if err != nil { fmt.Println(err) }
+  return new.Hash[:]
 }
 
 func iterator(chain *BlockChain, namespace string) *bcIterator { return &bcIterator{Current: chain.LastHash[namespace], Database: chain.Database} }

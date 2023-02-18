@@ -5,7 +5,7 @@ import (
   "math"
   "rhymald/mag-delta/client/plot"
   "rhymald/mag-delta/server/blockchain"
-  // "rhymald/mag-delta/server"
+  "rhymald/mag-delta/server"
   "rhymald/mag-delta/client"
   "rhymald/mag-delta/player"
   "rhymald/mag-delta/act"
@@ -29,7 +29,7 @@ func init() {
   fmt.Println("\n\t\t  ", plot.Bar("Initializing...",8), "\n")
   // player.PlayerBorn(&You,1024) ; blockchain.AddPlayer(StatChain, You)
   // player.PlayerBorn(&You,6) ; blockchain.AddPlayer(StatChain, You)
-  player.PlayerBorn(&You,0,&Frame.Player) //; server.AddPlayer(StatChain, You.Basics)
+  player.PlayerBorn(&You,0,&Frame.Player) ; server.AddPlayer(StatChain, You.Basics)
   // go func() { for { server.UpdPlayerStats(StatChain, You.Basics) } }()
   client.PlayerStatus(You, Target)
   fmt.Println("\n\t\t", plot.Bar("Successfully login",1),"\n")
@@ -72,7 +72,7 @@ func main() {
       client.PlayerStatus(You, Target) ; plot.Frame(Frame)
       time.Sleep( time.Millisecond * time.Duration( 128 ))
     } else {
-      _ = blockchain.ListBlocks(StatChain, "/")
+      _ = blockchain.ListBlocks(StatChain, "/Players")
       time.Sleep( time.Millisecond * time.Duration( 2048 ))
     }
   }
