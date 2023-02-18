@@ -5,7 +5,7 @@ import (
   "math"
   "rhymald/mag-delta/client/plot"
   "rhymald/mag-delta/server/blockchain"
-  "rhymald/mag-delta/server"
+  // "rhymald/mag-delta/server"
   "rhymald/mag-delta/client"
   "rhymald/mag-delta/player"
   "rhymald/mag-delta/act"
@@ -29,8 +29,8 @@ func init() {
   fmt.Println("\n\t\t  ", plot.Bar("Initializing...",8), "\n")
   // player.PlayerBorn(&You,1024) ; blockchain.AddPlayer(StatChain, You)
   // player.PlayerBorn(&You,6) ; blockchain.AddPlayer(StatChain, You)
-  player.PlayerBorn(&You,0,&Frame.Player) ; server.AddPlayer(StatChain, You.Basics)
-  go func() { for { server.UpdPlayerStats(StatChain, You.Basics) } }()
+  player.PlayerBorn(&You,0,&Frame.Player) //; server.AddPlayer(StatChain, You.Basics)
+  // go func() { for { server.UpdPlayerStats(StatChain, You.Basics) } }()
   client.PlayerStatus(You, Target)
   fmt.Println("\n\t\t", plot.Bar("Successfully login",1),"\n")
   player.FoeSpawn(&Target,0,&Frame.Foe)
@@ -57,9 +57,9 @@ func main() {
     for {
       Action, _ := <-Keys
       switch Action {
-        case "a":
+      case "e":
           go func(){ act.Jinx(&You, &Target, &Frame) }()
-          Action = ""
+          Action = " "
         default:
       }
       if Target.Status.Health <= 0 { player.PlayerEmpower(&You, 0) ; player.FoeSpawn(&Target, (funcs.Vector(You.Basics.Streams.Cre,You.Basics.Streams.Alt,You.Basics.Streams.Des)/math.Sqrt(3)-1)+grow, &Frame.Foe) }
@@ -72,8 +72,7 @@ func main() {
       client.PlayerStatus(You, Target) ; plot.Frame(Frame)
       time.Sleep( time.Millisecond * time.Duration( 128 ))
     } else {
-      pIDs := blockchain.ListBlocks(StatChain, "/Players")
-      _ = blockchain.ListBlocks(StatChain, pIDs[0])
+      _ = blockchain.ListBlocks(StatChain, "/")
       time.Sleep( time.Millisecond * time.Duration( 2048 ))
     }
   }

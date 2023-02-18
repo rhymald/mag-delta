@@ -13,7 +13,7 @@ import (
 type BlockChain struct {
   // Blocks []*Block
   Database *badger.DB
-  LastHash []byte
+  LastHash map[string][]byte
 }
 
 type bcIterator struct {
@@ -94,15 +94,17 @@ func InitBlockChain(dbPath string) *BlockChain {
     }
   })
   if err != nil { fmt.Println(err) }
-  return &BlockChain{LastHash: lastHash, Database: db}
+  lasts := make(map[string][]byte)
+  lasts["/"] = lastHash
+  return &BlockChain{LastHash: lasts, Database: db}
 }
 
 // upodate context
-func AddBlock(chain *BlockChain, data string, lastHash []byte, namespace []byte, id string) {
-  player := string(namespace)
-  if id == player { player = "/Players" }
-  new := createBlock(data, string(namespace), lastHash, Diff[player])
-  // get prev data
+func AddBlock(chain *BlockChain, data string) {
+  namespace := "/"
+  lastHash := chain.LastHash[namespace]
+  // ^ immitation
+  new := createBlock(data, namespace, lastHash, Diff[namespace])
   var prevData []byte
   err := chain.Database.View(func(txn *badger.Txn) error {
     item, err := txn.Get(lastHash)
@@ -112,26 +114,20 @@ func AddBlock(chain *BlockChain, data string, lastHash []byte, namespace []byte,
   })
   if err != nil { fmt.Println(err) }
   prevBlock := deserialize(prevData)
-  // if == no write
   if data == string(*&prevBlock.Data) { return }
-  // end if
   err = chain.Database.Update(func(txn *badger.Txn) error {
     err := txn.Set(new.Hash, serialize(new))
     if err != nil { fmt.Println(err) }
-    err = txn.Set((namespace), new.Hash)
-    if string(namespace) == "/Players" { // auto create subNSs
-      rowName := id
-      err = txn.Set( []byte(rowName), new.Hash)
-      rowName = fmt.Sprintf("%s/Session", id)
-      err = txn.Set( []byte(rowName), new.Hash)
-    }
-    chain.LastHash = new.Hash
+    // update context
+    err = txn.Set([]byte(namespace), new.Hash)
+    chain.LastHash[namespace] = new.Hash
+    // ^ updated context
     return err
   })
   if err != nil { fmt.Println(err) }
 }
 
-func iterator(chain *BlockChain) *bcIterator { return &bcIterator{Current: chain.LastHash, Database: chain.Database} }
+func iterator(chain *BlockChain, namespace string) *bcIterator { return &bcIterator{Current: chain.LastHash[namespace], Database: chain.Database} }
 
 func deeper(iter *bcIterator) *block {
   var block *block
@@ -150,7 +146,7 @@ func deeper(iter *bcIterator) *block {
 func ListBlocks(chain *BlockChain, namespace string) []string {
   // var rows []string
   var playerIDs []string
-  iter := iterator(chain)
+  iter := iterator(chain, namespace)
   depth := 0
   next := &block{Time: time.Now().UnixNano(), Namespace: namespace}
   fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
