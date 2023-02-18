@@ -7,36 +7,29 @@ import(
   "github.com/dgraph-io/badger"
   "encoding/base64"
   "encoding/json"
-  "crypto/sha512"
-  "encoding/binary"
-
 )
 
-// func UpdPlayerStats(chain *blockchain.BlockChain, player player.BasicStats) {
-//   dataString := toJson(player)
-//   in_bytes := make([]byte, 8)
-//   binary.LittleEndian.PutUint64(in_bytes, uint64(player.ID.Born))
-//   hsum := sha512.Sum512(in_bytes)
-//   id := fmt.Sprintf("/Players/%s", fmt.Sprintf("%.5X", hsum))
-//   var lastHash []byte
-//   // run read only txn (connection query)
-//   err := chain.Database.View(func(txn *badger.Txn) error {
-//     item, err := txn.Get([]byte(id))
-//     if err != nil { fmt.Println(err) }
-//     if err == badger.ErrKeyNotFound {
-//       fmt.Printf("Such player does not existhere, update node! How did you log in, cheater?!")
-//     } else {
-//       lastHash, err = item.ValueCopy([]byte(id)) // here!
-//     }
-//     return err
-//   })
-//   if err != nil { fmt.Println(err) }
-//   blockchain.AddBlock(chain, dataString)
-// }
-//
-//
-func AddPlayer(chain *blockchain.BlockChain, player player.BasicStats) {
-  dataString := toJson(player)
+func UpdPlayerStats(chain *blockchain.BlockChain, person player.Player) {
+  dataString := toJson(person.Basics)
+  id := player.GetID(person)
+  statsid := fmt.Sprintf("/Players/%s", id)
+  stateid := fmt.Sprintf("/Session/%s", id)
+  lasthash := blockchain.AddBlock(chain, dataString, statsid)
+  if len(lasthash) == 0 {return}
+  err := chain.Database.Update(func(txn *badger.Txn) error {
+    err := txn.Set([]byte(statsid), lasthash)
+    chain.LastHash[statsid] = lasthash
+    if err != nil { fmt.Println(err) }
+    err = txn.Set([]byte(stateid), lasthash)
+    chain.LastHash[stateid] = lasthash
+    if err != nil { fmt.Println(err) }
+    return err
+  })
+  if err != nil { fmt.Println(err) }
+}
+
+func AddPlayer(chain *blockchain.BlockChain, person player.Player) {
+  dataString := toJson(person.Basics)
   lasthash := []byte{}
   err := chain.Database.View(func(txn *badger.Txn) error {
     item, err := txn.Get([]byte("/Players"))
@@ -54,12 +47,9 @@ func AddPlayer(chain *blockchain.BlockChain, player player.BasicStats) {
   if err != nil { fmt.Println(err) }
   lasthash = blockchain.AddBlock(chain, dataString, "/Players")
   if len(lasthash) == 0 {return}
-  // propagate dependant contexts
-  in_bytes := make([]byte, 8)
-  binary.LittleEndian.PutUint64(in_bytes, uint64(player.ID.Born))
-  hsum := sha512.Sum512(in_bytes)
-  statsid := fmt.Sprintf("/Players/%s/Attributes", fmt.Sprintf("%.8X", hsum))
-  stateid := fmt.Sprintf("/Players/%s/Session", fmt.Sprintf("%.8X", hsum))
+  id := player.GetID(person)
+  statsid := fmt.Sprintf("/Players/%s", id)
+  stateid := fmt.Sprintf("/Session/%s", id)
   // creating subcontexts
   err = chain.Database.Update(func(txn *badger.Txn) error {
     err = txn.Set([]byte("/Players"), lasthash)

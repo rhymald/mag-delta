@@ -7,6 +7,8 @@ import (
   "fmt"
   _ "encoding/json"
   "time"
+  "crypto/sha512"
+  "encoding/binary"
 )
 
 // need restruct: separate block of hp+mp+exp
@@ -45,6 +47,15 @@ func PlayerEmpower(player *Player, mean float64){ // immitation
   buffer := *player
   buffer.Basics.ID.Last = funcs.Epoch()
   *player = buffer
+}
+
+func GetID(player Player) string {
+  in_bytes := make([]byte, 8)
+  binary.LittleEndian.PutUint64(in_bytes, uint64(player.Basics.ID.Born))
+  id := sha512.Sum512(in_bytes)
+  streang := fmt.Sprintf("%X", id)
+  final := fmt.Sprintf("%v-%v-%v-%v", streang[:4], streang[4:13], streang[13:14], streang[14:21])
+  return final
 }
 
 func CalculateAttributes_FromBasics(player *Player){
