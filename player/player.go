@@ -49,13 +49,17 @@ func PlayerEmpower(player *Player, mean float64){ // immitation
   *player = buffer
 }
 
-func GetID(player Player) string {
+func GetID(player Player) (string, string) {
   in_bytes := make([]byte, 8)
   binary.LittleEndian.PutUint64(in_bytes, uint64(player.Basics.ID.Born))
-  id := sha512.Sum512(in_bytes)
-  streang := fmt.Sprintf("%X", id)
-  final := fmt.Sprintf("%v-%v-%v-%v", streang[:4], streang[4:13], streang[13:14], streang[14:21])
-  return final
+  pid := fmt.Sprintf("%X", sha512.Sum512(in_bytes))
+  binary.LittleEndian.PutUint64(in_bytes, uint64(player.Basics.ID.Last))
+  sid := fmt.Sprintf("%X", sha512.Sum512(in_bytes))
+  pstring := fmt.Sprintf("%X", pid)
+  sstring := fmt.Sprintf("%X", sid)
+  pfinal := fmt.Sprintf("%v-%v", pstring[:4], pstring[119:128])
+  sfinal := fmt.Sprintf("%v-%v", sstring[:1], sstring[121:128])
+  return pfinal, sfinal
 }
 
 func CalculateAttributes_FromBasics(player *Player){
@@ -68,7 +72,7 @@ func CalculateAttributes_FromBasics(player *Player){
   *player = buffer
 }
 
-func PlayerBorn(player *Player, mean float64, logger *string){
+func PlayerBorn(player *Player, mean float64, logger *string) string {
   buffer := Player{}
   buffer.Basics.ID.NPC = false
   buffer.Basics.ID.Born = funcs.Epoch()
@@ -79,6 +83,8 @@ func PlayerBorn(player *Player, mean float64, logger *string){
   buffer.Status.Health = math.Sqrt(buffer.Attributes.Vitality+1)-1 //from db
   *player = buffer
   go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body, logger) }()
+  pid, _ := GetID(buffer)
+  return fmt.Sprintf("/Session/%s", pid)
 }
 
 func FoeSpawn(foe *Player, mean float64, logger *string) { // old, new+ template Stream{}

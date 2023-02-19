@@ -18,8 +18,8 @@ func CleanFrame() LogFrame {
   buffer.Actions = append(buffer.Actions," ")
   buffer.Actions = append(buffer.Actions,"Welcome!")
   buffer.Actions = append(buffer.Actions,"Here you can find a list of actions you have made.")
-  buffer.Actions = append(buffer.Actions,"Just press A key to attack the dummy,")
-  buffer.Actions = append(buffer.Actions,"Press ? key to get the chain tree")
+  buffer.Actions = append(buffer.Actions,"Just press [E] key to attack the dummy,")
+  buffer.Actions = append(buffer.Actions,"Press [?] key to get the chain tree")
   buffer.Actions = append(buffer.Actions," ")
   buffer.Foe = ""
   return buffer

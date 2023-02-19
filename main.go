@@ -18,6 +18,7 @@ import (
 const DBPath = "./cache"
 const CacheAddr = "local"
 
+var playerID string
 var You player.Player
 var Target player.Player
 var StatChain *blockchain.BlockChain = blockchain.InitBlockChain(DBPath)
@@ -27,8 +28,9 @@ var Keys chan string = make(chan string)
 
 func init() {
   fmt.Println("\n\t\t  ", plot.Bar("Initializing...",8), "\n")
-  player.PlayerBorn(&You,0,&Frame.Player) ; server.AddPlayer(StatChain, You)
+  playerID = player.PlayerBorn(&You,0,&Frame.Player) ; server.AddPlayer(StatChain, You)
   go func() { for { server.UpdPlayerStats(StatChain, You) } }()
+  go func() { for { server.UpdPlayerStatE(StatChain, You) } }()
   client.PlayerStatus(You, Target)
   fmt.Println("\n\t\t", plot.Bar("Successfully login",1),"\n")
   player.FoeSpawn(&Target,0,&Frame.Foe)
@@ -70,7 +72,7 @@ func main() {
       client.PlayerStatus(You, Target) ; plot.Frame(Frame)
       time.Sleep( time.Millisecond * time.Duration( 128 ))
     } else {
-      blockchain.ListBlocks(StatChain, "/Players")
+      blockchain.ListBlocks(StatChain, playerID)
       time.Sleep( time.Millisecond * time.Duration( 2048 ))
     }
   }

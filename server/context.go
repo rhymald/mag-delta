@@ -1,19 +1,49 @@
 package server
 
 import(
-  "fmt"
-  "rhymald/mag-delta/player"
   "rhymald/mag-delta/server/blockchain"
   "github.com/dgraph-io/badger"
-  "encoding/base64"
-  "encoding/json"
+  "fmt"
+  "rhymald/mag-delta/player"
 )
+
+func UpdPlayerStatE(chain *blockchain.BlockChain, person player.Player) {
+  dataString := toJson(person.Status)
+  pid, sid := player.GetID(person)
+  statsid := fmt.Sprintf("/Players/%s", pid)
+  stateid := fmt.Sprintf("/Session/%s/%s", pid, sid)
+  anchor := fmt.Sprintf("/Session/%s", pid)
+  err := chain.Database.View(func(txn *badger.Txn) error {
+    _, err := txn.Get([]byte(stateid))
+    if err == badger.ErrKeyNotFound {
+      err = chain.Database.View(func(txn *badger.Txn) error {
+        item, err := txn.Get([]byte(statsid))
+        chain.LastHash[stateid], err = item.ValueCopy([]byte(statsid))
+        return err
+      })
+    }
+    return err
+  })
+  lasthash := blockchain.AddBlock(chain, dataString, stateid)
+  if len(lasthash) == 0 {return}
+  err = chain.Database.Update(func(txn *badger.Txn) error {
+    err = txn.Set([]byte(anchor), lasthash)
+    chain.LastHash[anchor] = lasthash
+    if err != nil { fmt.Println(err) }
+    err = txn.Set([]byte(stateid), lasthash)
+    chain.LastHash[stateid] = lasthash
+    if err != nil { fmt.Println(err) }
+    return err
+  })
+  if err != nil { fmt.Println(err) }
+}
 
 func UpdPlayerStats(chain *blockchain.BlockChain, person player.Player) {
   dataString := toJson(person.Basics)
-  id := player.GetID(person)
-  statsid := fmt.Sprintf("/Players/%s", id)
-  stateid := fmt.Sprintf("/Session/%s", id)
+  pid, sid := player.GetID(person)
+  stateid := fmt.Sprintf("/Session/%s/%s", pid, sid)
+  statsid := fmt.Sprintf("/Players/%s", pid)
+  anchor := fmt.Sprintf("/Session/%s", pid)
   lasthash := blockchain.AddBlock(chain, dataString, statsid)
   if len(lasthash) == 0 {return}
   err := chain.Database.Update(func(txn *badger.Txn) error {
@@ -22,6 +52,9 @@ func UpdPlayerStats(chain *blockchain.BlockChain, person player.Player) {
     if err != nil { fmt.Println(err) }
     err = txn.Set([]byte(stateid), lasthash)
     chain.LastHash[stateid] = lasthash
+    if err != nil { fmt.Println(err) }
+    err = txn.Set([]byte(anchor), lasthash)
+    chain.LastHash[anchor] = lasthash
     if err != nil { fmt.Println(err) }
     return err
   })
@@ -47,9 +80,10 @@ func AddPlayer(chain *blockchain.BlockChain, person player.Player) {
   if err != nil { fmt.Println(err) }
   lasthash = blockchain.AddBlock(chain, dataString, "/Players")
   if len(lasthash) == 0 {return}
-  id := player.GetID(person)
-  statsid := fmt.Sprintf("/Players/%s", id)
-  stateid := fmt.Sprintf("/Session/%s", id)
+  pid, sid := player.GetID(person)
+  stateid := fmt.Sprintf("/Session/%s/%s", pid, sid)
+  statsid := fmt.Sprintf("/Players/%s", pid)
+  anchor := fmt.Sprintf("/Session/%s", pid)
   // creating subcontexts
   err = chain.Database.Update(func(txn *badger.Txn) error {
     err = txn.Set([]byte("/Players"), lasthash)
@@ -61,22 +95,10 @@ func AddPlayer(chain *blockchain.BlockChain, person player.Player) {
     err = txn.Set([]byte(stateid), lasthash)
     chain.LastHash[stateid] = lasthash
     if err != nil { fmt.Println(err) }
+    err = txn.Set([]byte(anchor), lasthash)
+    chain.LastHash[anchor] = lasthash
+    if err != nil { fmt.Println(err) }
     return err
   })
   if err != nil { fmt.Println(err) }
-}
-
-func toJson(thing player.BasicStats) string {
-  b, err := json.Marshal(thing)
-  if err != nil { fmt.Println(err) ; return "" }
-  encoded := base64.StdEncoding.EncodeToString(b)
-  return encoded
-}
-
-func fromJson(code string, thing player.BasicStats) player.BasicStats {
-  copy := &thing
-  decoded, _ := base64.StdEncoding.DecodeString(code)
-  err := json.Unmarshal(decoded, copy)
-  if err != nil { fmt.Println(err) ; return player.BasicStats{} }
-  return *copy
 }

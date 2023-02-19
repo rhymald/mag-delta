@@ -39,7 +39,7 @@ func takeDiff(ns string) int {
   for diff, _ := range Diff {
     trigger := diff == ns[:len(diff)]
     if trigger && diff != "/" {
-      fmt.Printf("\r    U-USED DIF-F-FICULTY: %s = %d\r", diff, Diff[diff])
+      // fmt.Printf("\r    U-USED DIF-F-FICULTY: %s = %d\r", diff, Diff[diff])
       return Diff[diff]
     }
   }
