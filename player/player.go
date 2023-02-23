@@ -30,10 +30,10 @@ type BasicStats struct {
   Items []funcs.Stream `json:"Items,omitempty"`
 } // ^ stored in stats/spawn chains
 type CharStatus struct { // +heats +exp +consumables
+  XYZ [3]float64 `json:"XYZ"` // not used yet
   Health float64 `json:"Health"`
   Pool []funcs.Dot `json:"Pool,omitempty"`
   Focus []string `json:"Focus,omitempty"` // 0 for target, 1+ other
-  XYZ [3]float64 `json:"XYZ"` // not used yet
   Barrier map[string]float64 `json:"Barrier,omitempty"` // max hp mods per element
 } // ^ stored in status chain
 type CharAttributes struct { // +states

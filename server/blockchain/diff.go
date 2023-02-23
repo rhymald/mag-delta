@@ -13,9 +13,12 @@ var Diff map[string]int = map[string]int{
 }
 
 // upodate context
-func AddBlock(chain *BlockChain, data string, namespace string) []byte {
+func AddBlock(chain *BlockChain, data string, namespace string, behind []byte) []byte {
+  chain.Lock()
   lastHash := chain.LastHash[namespace]
-  new := createBlock(data, namespace, lastHash, takeDiff(namespace))
+  epoch := chain.Epoch
+  chain.Unlock()
+  new := createBlock(data, namespace, lastHash, takeDiff(namespace), behind, epoch)
   var prevData []byte
   err := chain.Database.View(func(txn *badger.Txn) error {
     item, err := txn.Get(lastHash)

@@ -4,6 +4,7 @@ import(
   "fmt"
   "encoding/base64"
   "encoding/json"
+  "rhymald/mag-delta/player"
 )
 
 func toJson(thing interface{}) string {
@@ -13,7 +14,15 @@ func toJson(thing interface{}) string {
   return encoded
 }
 
-func fromJson(code string, thing interface{}) interface{} {
+func statsFromJson(code string, thing player.BasicStats) player.BasicStats {
+  copy := &thing
+  decoded, _ := base64.StdEncoding.DecodeString(code)
+  err := json.Unmarshal(decoded, copy)
+  if err != nil { fmt.Println(err) ; return thing }
+  return *copy
+}
+
+func stateFromJson(code string, thing player.CharStatus) player.CharStatus {
   copy := &thing
   decoded, _ := base64.StdEncoding.DecodeString(code)
   err := json.Unmarshal(decoded, copy)

@@ -14,14 +14,15 @@ import (
 type block struct {
   Time int64
   Namespace string
+  Behind []byte
   Hash []byte
   Data []byte
   Prev []byte
   Nonce int64
 }
 
-func createBlock(data string, ns string, prevHash []byte, diff int) *block {
-  block := &block{Hash: []byte{}, Data: []byte(data), Prev: prevHash, Time: time.Now().UnixNano(), Nonce: 0, Namespace: ns }
+func createBlock(data string, ns string, prevHash []byte, diff int, behind []byte, epoch int64) *block {
+  block := &block{Hash: []byte{}, Data: []byte(data), Prev: prevHash, Behind: behind, Time: time.Now().UnixNano()-epoch, Nonce: 0, Namespace: ns }
   pow := newProof(block, diff)
   nonce, hash := run(pow)
   block.Hash = hash[:]
@@ -30,7 +31,7 @@ func createBlock(data string, ns string, prevHash []byte, diff int) *block {
 }
 
 func genesis() *block {
-  return createBlock(base64.StdEncoding.EncodeToString([]byte("GENESIS BLOCK: ThickCat Concensus Protocol initialized. Hello, artifical World!")), "/", []byte{}, Diff["/"])
+  return createBlock(base64.StdEncoding.EncodeToString([]byte("GENESIS BLOCK: ThickCat Concensus Protocol initialized. Hello, artifical World!")), "/", []byte{}, Diff["/"], []byte{}, 0)
 }
 
 func serialize(b *block) []byte {

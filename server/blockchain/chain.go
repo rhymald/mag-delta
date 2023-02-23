@@ -5,12 +5,14 @@ import (
   "github.com/dgraph-io/badger"
   "time"
   "encoding/base64"
+  "sync"
 )
 
 type BlockChain struct {
-  // Blocks []*Block
+  Epoch int64
   Database *badger.DB
   LastHash map[string][]byte
+  sync.Mutex
 }
 
 type bcIterator struct {
@@ -40,6 +42,7 @@ func FindByPrefixes(chain *BlockChain, prefix []byte) [][]byte {
 
 func InitBlockChain(dbPath string) *BlockChain {
   var lastHash []byte
+  var epoch int64
   opts := badger.DefaultOptions(dbPath)
   opts.Dir = dbPath
   opts.ValueDir = dbPath
@@ -49,6 +52,7 @@ func InitBlockChain(dbPath string) *BlockChain {
     if _, err := txn.Get([]byte("/")); err == badger.ErrKeyNotFound {
       fmt.Printf("Blockchain does not exist! Genereating...")
       genesis := genesis()
+      epoch = genesis.Time
       fmt.Printf(" Writing...")
       err := txn.Set(genesis.Hash, serialize(genesis))
       if err != nil { fmt.Println(err) }
@@ -66,10 +70,13 @@ func InitBlockChain(dbPath string) *BlockChain {
   if err != nil { fmt.Println(err) }
   lasts := make(map[string][]byte)
   lasts["/"] = lastHash
-  return &BlockChain{LastHash: lasts, Database: db}
+  return &BlockChain{LastHash: lasts, Database: db, Epoch: epoch}
 }
 
-func iterator(chain *BlockChain, namespace string) *bcIterator { return &bcIterator{Current: chain.LastHash[namespace], Database: chain.Database} }
+func iterator(chain *BlockChain, namespace string) *bcIterator {
+  chain.Lock() ; current := chain.LastHash[namespace] ; chain.Unlock()
+  return &bcIterator{Current: current, Database: chain.Database}
+}
 
 func deeper(iter *bcIterator) *block {
   var block *block
@@ -82,6 +89,7 @@ func deeper(iter *bcIterator) *block {
   })
   if err != nil { fmt.Println(err) }
   iter.Current = block.Prev // step back
+  if len(block.Behind)>0 { iter.Current = block.Behind }
   return block
 }
 
@@ -95,6 +103,7 @@ func ListBlocks(chain *BlockChain, namespace string) {
     each := deeper(iter)
     if each.Namespace != next.Namespace { fmt.Printf("────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n") }
     fmt.Printf("\u001b[1m%x\u001b[0m\n", string(each.Hash))
+    if len(each.Behind)>0 { fmt.Printf("\u001b[1mTriggered by\u001b[0m %x\n", string(each.Behind)) }
     fmt.Printf("   %d'", -depth)
     fmt.Printf("\u001b[1m%s\u001b[0m", each.Namespace)
     fmt.Printf(" \u001b[1mTime\u001b[0m %d", each.Time)
