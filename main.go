@@ -13,29 +13,66 @@ import (
   "os"
   "os/exec"
   "time"
+  "flag"
 )
 
-const DBPath = "./cache"
-const CacheAddr = "local"
-
+var DBPath string //= "./cache"
 var playerID string
+var reborn bool = false
+
 var You player.Player
 var Target player.Player
-var StatChain *blockchain.BlockChain = blockchain.InitBlockChain(DBPath)
+var StatChain *blockchain.BlockChain //= blockchain.InitBlockChain(DBPath)
 
 var Frame plot.LogFrame = plot.CleanFrame()
 var Keys chan string = make(chan string)
 
+func connect() string { //read app args and connect to db
+  id := flag.String("p", "[no id defined]", "Player ID to login")
+  flag.StringVar(&DBPath, "d", "cache", "Directory for cache")
+  flag.BoolVar(&reborn, "n", false, "Create new player")
+  help := flag.Bool("h", false, "Show this help")
+  flag.Parse()
+  if *help { fmt.Println("Application usage: keys") ; flag.PrintDefaults() ; fmt.Println(); os.Exit(1)}
+  fmt.Println("\n\t\t", plot.Bar("  Initializing... ",0), "\n")
+  StatChain = blockchain.InitBlockChain(DBPath)
+  return *id
+}
+
 func init() {
-  fmt.Println("\n\t\t  ", plot.Bar("Initializing...",8), "\n")
-  playerID = player.PlayerBorn(&You,0,&Frame.Player) ; server.AddPlayer(StatChain, You)
-  go func() { for { server.UpdPlayerStats(StatChain, You) } }()
-  go func() { for { server.UpdPlayerStatE(StatChain, You) } }()
-  client.PlayerStatus(You, Target)
-  fmt.Println("\n\t\t", plot.Bar("Successfully login",1),"\n")
-  player.FoeSpawn(&Target,0,&Frame.Foe)
-  client.PlayerStatus(You, Target)
-  fmt.Println("\n\t     ",plot.Bar("Press [Enter] to continue",8),"\n")
+  id := connect()
+  fmt.Printf("Login with player ID: \u001b[1m")
+  if reborn {fmt.Println(("[generating new...]"))} else {fmt.Println((id))}
+  fmt.Printf("\u001b[0m")
+  if reborn {
+    playerID = player.PlayerBorn(&You, 0, &Frame.Player)
+    server.AddPlayer(StatChain, You)
+    fmt.Println("\n\t", plot.Bar("  Successfully created new player  ",4),"\n")
+  } else {
+    if len(id) == 14 {
+      You = server.AssumePlayer(StatChain, id, &Frame.Player)
+      player.Live(&You, &Frame.Player)
+      if You.Basics.ID.Born == 0 {
+        fmt.Println("\n\t\t", plot.Bar("   Login failed   ",6))
+        fmt.Println("\t\t", plot.Bar("  No such player  ",6),"\n")
+        playerID = fmt.Sprintf("/Players")
+      } else {
+        fmt.Println("\n\t\t", plot.Bar("Successfully login",1),"\n")
+        playerID = fmt.Sprintf("/Session/%s", id)
+      }
+    } else {
+      fmt.Println("\n\t\t", plot.Bar(" Invalid playerId ",6),"\n")
+      playerID = fmt.Sprintf("/Players")
+    }
+  }
+  if You.Basics.ID.Born != 0 {
+    go func() { for { server.UpdPlayerStats(StatChain, You) } }()
+    go func() { for { server.UpdPlayerStatE(StatChain, You) } }()
+    client.PlayerStatus(You, Target)
+    player.FoeSpawn(&Target,0,&Frame.Foe)
+    client.PlayerStatus(You, Target)
+  }
+  fmt.Println("\n\t     ",plot.Bar("Press [Enter] to continue",0),"\n")
   fmt.Scanln()
 }
 
@@ -68,12 +105,15 @@ func main() {
   for {
     plot.Clean()
     plot.ShowMenu(string(b))
-    if string(b) != "?" {
+    if string(b) == "/" {
+      blockchain.ListBlocks(StatChain, playerID, true)
+      time.Sleep( time.Millisecond * time.Duration( 2048 ))
+    } else if string(b) == "?" {
+      blockchain.ListBlocks(StatChain, playerID, false)
+      time.Sleep( time.Millisecond * time.Duration( 2048 ))
+    } else {
       client.PlayerStatus(You, Target) ; plot.Frame(Frame)
       time.Sleep( time.Millisecond * time.Duration( 128 ))
-    } else {
-      blockchain.ListBlocks(StatChain, playerID)
-      time.Sleep( time.Millisecond * time.Duration( 2048 ))
     }
   }
 }

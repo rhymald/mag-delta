@@ -49,6 +49,15 @@ func PlayerEmpower(player *Player, mean float64){ // immitation
   *player = buffer
 }
 
+func Live(player *Player, logger *string) {
+  // +unblock
+  if player.Basics.ID.NPC {
+    go func(){ Negeneration(&(*&player.Status.Health), *&player.Attributes.Vitality, *&player.Attributes.Poolsize, *&player.Basics.Body, logger) }()
+  } else {
+    go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body, logger) }()
+  }
+}
+
 func GetID(player Player) (string, string) {
   in_bytes := make([]byte, 8)
   binary.LittleEndian.PutUint64(in_bytes, uint64(player.Basics.ID.Born))
@@ -82,7 +91,8 @@ func PlayerBorn(player *Player, mean float64, logger *string) string {
   CalculateAttributes_FromBasics(&buffer)
   buffer.Status.Health = math.Sqrt(buffer.Attributes.Vitality+1)-1 //from db
   *player = buffer
-  go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body, logger) }()
+  Live(player, logger)
+  // go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body, logger) }()
   pid, _ := GetID(buffer)
   return fmt.Sprintf("/Session/%s", pid)
 }
@@ -97,7 +107,8 @@ func FoeSpawn(foe *Player, mean float64, logger *string) { // old, new+ template
   CalculateAttributes_FromBasics(&buffer)
   buffer.Status.Health = buffer.Attributes.Vitality / math.Sqrt2
   *foe = buffer
-  go func(){ Negeneration(&(*&foe.Status.Health), *&foe.Attributes.Vitality, *&foe.Attributes.Poolsize, *&foe.Basics.Body, logger) }()
+  Live(foe, logger)
+  // go func(){ Negeneration(&(*&foe.Status.Health), *&foe.Attributes.Vitality, *&foe.Attributes.Poolsize, *&foe.Basics.Body, logger) }()
 }
 
 func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64, stream funcs.Stream, body funcs.Stream, logger *string) {
@@ -115,6 +126,7 @@ func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64
       }
       *pool = append(*pool, dot )
       if *health <= 0 { *logger = fmt.Sprintf("You are Died") ; break }
+      // +break logout
       if *health < maxhp { *health += heal } else { *health = maxhp }
       //unblock
     }
@@ -131,6 +143,7 @@ func Negeneration(health *float64, maxhp float64, maxe float64, body funcs.Strea
       //block
       if *health < maxhp { *logger = fmt.Sprintf("Dummy: %+0.3f'hp for %0.3fs ", heal, pause/1000) }
       if *health <= 0 { *logger = fmt.Sprintf("Dummy: Foe died ") ; break }
+      // +break unspawn
       if *health < maxhp { *health += heal } else { *health = maxhp }
       //unblock
     }

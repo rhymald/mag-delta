@@ -27,7 +27,7 @@ func AddBlock(chain *BlockChain, data string, namespace string, behind []byte) [
     return err
   })
   if err != nil { fmt.Println(err) }
-  prevBlock := deserialize(prevData)
+  prevBlock := Deserialize(prevData)
   if data == string(*&prevBlock.Data) { return []byte{} }
   err = chain.Database.Update(func(txn *badger.Txn) error {
     err := txn.Set(new.Hash, serialize(new))

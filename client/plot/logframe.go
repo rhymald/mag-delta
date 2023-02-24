@@ -19,7 +19,8 @@ func CleanFrame() LogFrame {
   buffer.Actions = append(buffer.Actions,"Welcome!")
   buffer.Actions = append(buffer.Actions,"Here you can find a list of actions you have made.")
   buffer.Actions = append(buffer.Actions,"Just press [E] key to attack the dummy,")
-  buffer.Actions = append(buffer.Actions,"Press [?] key to get the chain tree")
+  buffer.Actions = append(buffer.Actions,"Press [?] key to get the chain tree,")
+  buffer.Actions = append(buffer.Actions,"Or [/] key to get the list of players.")
   buffer.Actions = append(buffer.Actions," ")
   buffer.Foe = ""
   return buffer
@@ -31,7 +32,8 @@ func Frame(frame LogFrame){
   fmt.Println("    " ,frame.Player)
   fmt.Println(" ─┼─────[Actions]────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
   for x:=0 ; x<(len(frame.Actions)) ; x++ {
-    fmt.Println("    " ,frame.Actions[x])
+    if x%2 == 1 {fmt.Printf(" ")}
+    fmt.Printf("    %s\n" ,frame.Actions[x])
   }
   fmt.Println(" ─┼───────[Foes]─────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
   fmt.Println("    " ,frame.Foe)

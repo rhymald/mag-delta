@@ -7,7 +7,7 @@ import(
   "rhymald/mag-delta/player"
 )
 
-func AssumePlayer(chain *blockchain.BlockChain, id string) player.Player {
+func AssumePlayer(chain *blockchain.BlockChain, id string, logger *string) player.Player {
   // supposed to use as login
   dummy := player.Player{}
   var statsJson []byte
@@ -15,19 +15,28 @@ func AssumePlayer(chain *blockchain.BlockChain, id string) player.Player {
   chain.Lock()
   statsat := chain.LastHash[fmt.Sprintf("/Players/%s", id)]
   stateat := chain.LastHash[fmt.Sprintf("/Session/%s", id)]
+  if len(statsat) != len(stateat) || len(statsat) == 0 { return dummy }
   chain.Unlock()
   err := chain.Database.View(func(txn *badger.Txn) error {
     item, err := txn.Get([]byte(statsat))
-    statsJson, err = item.ValueCopy([]byte(statsat))
+    statsJson, err = item.ValueCopy(statsat)
+    block := blockchain.Deserialize(statsJson)
+    statsJson = block.Data
     return err
   })
   if err != nil { fmt.Println(err) } else { dummy.Basics = statsFromJson(string(statsJson), dummy.Basics) }
   err = chain.Database.View(func(txn *badger.Txn) error {
     item, err := txn.Get([]byte(stateat))
-    stateJson, err = item.ValueCopy([]byte(stateat))
+    stateJson, err = item.ValueCopy(stateat)
+    block := blockchain.Deserialize(stateJson)
+    stateJson = block.Data
     return err
   })
   if err != nil { fmt.Println(err) } else { dummy.Status = stateFromJson(string(stateJson), dummy.Status) }
+  player.CalculateAttributes_FromBasics(&dummy)
+  // if dummy.Basics.ID.Born != 0 {
+  //   go func(){ player.Regeneration(&(*&dummy.Status.Pool), &(*&dummy.Status.Health), *&dummy.Attributes.Poolsize, *&dummy.Attributes.Vitality, *&dummy.Basics.Streams, *&dummy.Basics.Body, logger) }()
+  // }
   return dummy
 }
 

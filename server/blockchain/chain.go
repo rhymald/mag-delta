@@ -6,6 +6,8 @@ import (
   "time"
   "encoding/base64"
   "sync"
+  "os"
+  "errors"
 )
 
 type BlockChain struct {
@@ -20,8 +22,8 @@ type bcIterator struct {
   Current []byte
 }
 
-func FindByPrefixes(chain *BlockChain, prefix []byte) [][]byte {
-  var playerList [][]byte
+func FindByPrefixes(chain *BlockChain, prefix []byte) [][2][]byte {
+  var playerList [][2][]byte
   chain.Database.View( func(txn *badger.Txn) error {
     iterator := txn.NewIterator(badger.DefaultIteratorOptions)
     defer iterator.Close()
@@ -29,20 +31,34 @@ func FindByPrefixes(chain *BlockChain, prefix []byte) [][]byte {
       item := iterator.Item()
       key := item.Key()
       err := item.Value(func (v []byte) error {
-        playerList = append(playerList, []byte(fmt.Sprintf("\u001b[1m%s\u001b[0m %x", key, v)))
+        playerList = append(playerList, [2][]byte{ key, v })
         return nil
       })
       if err != nil { return err }
     }
     return nil
   })
-  if len(playerList) == 0 { playerList = append(playerList, prefix) }
+  if len(playerList) == 0 { playerList = append(playerList, [2][]byte{ prefix, []byte{} }) }
   return playerList
+}
+
+
+func ensureDir(path string) error {
+  err := os.Mkdir(path, 0755)
+  if err == nil { return nil }
+  if os.IsExist(err) {
+    info, err := os.Stat(path)
+    if err == nil { return nil }
+    if !info.IsDir() { errors.New("invalid path, already exists, but not a dir") }
+    return nil
+  }
+  return err
 }
 
 func InitBlockChain(dbPath string) *BlockChain {
   var lastHash []byte
   var epoch int64
+  ensureDir(dbPath)
   opts := badger.DefaultOptions(dbPath)
   opts.Dir = dbPath
   opts.ValueDir = dbPath
@@ -64,13 +80,26 @@ func InitBlockChain(dbPath string) *BlockChain {
       item, err := txn.Get([]byte("/"))
       if err != nil { fmt.Println(err) }
       lastHash, err = item.ValueCopy([]byte("/")) // ???
+      err = db.View(func(txn *badger.Txn) error {
+        item, err := txn.Get(lastHash)
+        if err != nil { fmt.Println(err) }
+        encodedBlock, err := item.ValueCopy(lastHash)
+        block := Deserialize(encodedBlock)
+        epoch = block.Time
+        return err
+      })
       return err
     }
   })
   if err != nil { fmt.Println(err) }
   lasts := make(map[string][]byte)
   lasts["/"] = lastHash
-  return &BlockChain{LastHash: lasts, Database: db, Epoch: epoch}
+  chain := &BlockChain{LastHash: lasts, Database: db, Epoch: epoch}
+  playerList := FindByPrefixes(chain, []byte("/Players"))
+  for _, identity := range playerList { lasts[string(identity[0])] = identity[1] }
+  playerList = FindByPrefixes(chain, []byte("/Session"))
+  for _, identity := range playerList { lasts[string(identity[0])] = identity[1] }
+  return chain
 }
 
 func iterator(chain *BlockChain, namespace string) *bcIterator {
@@ -84,7 +113,7 @@ func deeper(iter *bcIterator) *block {
     item, err := txn.Get(iter.Current)
     if err != nil { fmt.Println(err) }
     encodedBlock, err := item.ValueCopy(iter.Current)
-    block = deserialize(encodedBlock)
+    block = Deserialize(encodedBlock)
     return err
   })
   if err != nil { fmt.Println(err) }
@@ -93,32 +122,36 @@ func deeper(iter *bcIterator) *block {
   return block
 }
 
-func ListBlocks(chain *BlockChain, namespace string) {
+func ListBlocks(chain *BlockChain, namespace string, extended bool) {
   // var rows []string
   iter := iterator(chain, namespace)
   depth := 0
-  next := &block{Time: time.Now().UnixNano(), Namespace: namespace}
-  fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
-  for i:=0; i<10; i++ {
-    each := deeper(iter)
-    if each.Namespace != next.Namespace { fmt.Printf("────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n") }
-    fmt.Printf("\u001b[1m%x\u001b[0m\n", string(each.Hash))
-    if len(each.Behind)>0 { fmt.Printf("\u001b[1mTriggered by\u001b[0m %x\n", string(each.Behind)) }
-    fmt.Printf("   %d'", -depth)
-    fmt.Printf("\u001b[1m%s\u001b[0m", each.Namespace)
-    fmt.Printf(" \u001b[1mTime\u001b[0m %d", each.Time)
-    fmt.Printf(" \u001b[1mGape\u001b[0m %0.3fs.", float64(each.Time-next.Time)/1000000000)
-    fmt.Printf(" \u001b[1mNonce\u001b[0m %d", each.Nonce)
-    fmt.Printf(" \u001b[1mValid\u001b[0m %v\n", validate(newProof(each, Diff[each.Namespace])))
-    decoded, _ := base64.StdEncoding.DecodeString(string(each.Data))
-    fmt.Printf("\u001b[1mData\u001b[0m %s\n", decoded)
-    depth--
-    if len(each.Prev) == 0 { break } else { fmt.Printf("%x\n", each.Prev) }
-    next = each
+  next := &block{Time: time.Now().UnixNano()-chain.Epoch, Namespace: namespace}
+  if !extended {
+    fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
+    for i:=0; i<7; i++ {
+      each := deeper(iter)
+      if each.Namespace != next.Namespace { fmt.Printf("────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n") }
+      fmt.Printf("\u001b[1m%x\u001b[0m\n", string(each.Hash))
+      if len(each.Behind)>0 { fmt.Printf("\u001b[1mTriggered by\u001b[0m %x\n", string(each.Behind)) }
+      fmt.Printf("   %d'", -depth)
+      fmt.Printf("\u001b[1m%s\u001b[0m", each.Namespace)
+      fmt.Printf(" \u001b[1mTime\u001b[0m %d", each.Time)
+      fmt.Printf(" \u001b[1mGape\u001b[0m %0.3fs.", float64(each.Time-next.Time)/1000000000)
+      fmt.Printf(" \u001b[1mNonce\u001b[0m %d", each.Nonce)
+      fmt.Printf(" \u001b[1mValid\u001b[0m %v\n", validate(newProof(each, Diff[each.Namespace])))
+      decoded, _ := base64.StdEncoding.DecodeString(string(each.Data))
+      fmt.Printf("\u001b[1mData\u001b[0m %s\n", decoded)
+      depth--
+      if len(each.Prev) == 0 { break } else { fmt.Printf("%x\n", each.Prev) }
+      next = each
+    }
+    fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
   }
-  fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
-  playerList := FindByPrefixes(chain, []byte("/"))
-  fmt.Println(" ─────── ──── ───────── ─ ─────── Metadata info ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
-  for _, each := range playerList { fmt.Println(string(each)) }
-  fmt.Println(" ─────── ──── ───────── ─ ─────── ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n")
+  if extended {
+    playerList := FindByPrefixes(chain, []byte("/"))
+    fmt.Println(" ─────── ──── ───────── ─ ─────── Metadata info ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
+    for _, each := range playerList { fmt.Println(string(each[0]), fmt.Sprintf("%x", each[1])) }
+    fmt.Println(" ─────── ──── ───────── ─ ─────── ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n")
+  }
 }
