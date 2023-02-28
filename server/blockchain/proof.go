@@ -15,11 +15,11 @@ type pow struct {
 
 func newProof(b *block, diff int) *pow {
   target := big.NewInt( 1 )
-  target.Lsh(target, uint(512-diff*4))
+  target.Lsh(target, uint(512-diff))
   return &pow{Block: b, Target: target}
 }
 
-func initData(pow *pow, nonce int64) []byte { return bytes.Join( [][]byte{ pow.Block.Data, pow.Block.Prev, bigToHex(nonce), bigToHex(int64(Diff[pow.Block.Namespace])) }, []byte{} ) }
+func initData(pow *pow, nonce int64) []byte { return bytes.Join( [][]byte{ pow.Block.Data, pow.Block.Prev, bigToHex(nonce), bigToHex(int64(takeDiff(pow.Block.Namespace, pow.Block.Time))) }, []byte{} ) }
 
 func bigToHex(num int64) []byte {
   buff := new(bytes.Buffer)

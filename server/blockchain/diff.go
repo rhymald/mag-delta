@@ -3,22 +3,24 @@ package blockchain
 import(
   "fmt"
   "github.com/dgraph-io/badger"
+  "time"
+  "math"
 )
 
 var Diff map[string]int = map[string]int{
-  "/": 4,
-  "/Players": 3,
+  "/": 0,
+  "/Players": 1,
   "/NPC": 2,
-  "/Session": 1,
+  "/Session": 3,
 }
 
 // upodate context
 func AddBlock(chain *BlockChain, data string, namespace string, behind []byte) []byte {
   chain.Lock()
   lastHash := chain.LastHash[namespace]
-  epoch := chain.Epoch
+  epoch := time.Now().UnixNano()-1317679200000000000-chain.Epoch
   chain.Unlock()
-  new := createBlock(data, namespace, lastHash, takeDiff(namespace), behind, epoch)
+  new := createBlock(data, namespace, lastHash, takeDiff(namespace, epoch), behind, epoch)
   var prevData []byte
   err := chain.Database.View(func(txn *badger.Txn) error {
     item, err := txn.Get(lastHash)
@@ -38,13 +40,17 @@ func AddBlock(chain *BlockChain, data string, namespace string, behind []byte) [
   return new.Hash[:]
 }
 
-func takeDiff(ns string) int {
+func takeDiff(ns string, epoch int64) int {
+  maxdiff := 16.0// math.Log2(float64(epoch)+1)/math.Log2(1000*math.Phi)
   for diff, _ := range Diff {
-    trigger := diff == ns[:len(diff)]
+    // fmt.Println(diff, ns)
+    trigger := false
+    if len(ns)>len(diff) { trigger = diff == ns[:len(diff)] }
     if trigger && diff != "/" {
-      // fmt.Printf("\r    U-USED DIF-F-FICULTY: %s = %d\r", diff, Diff[diff])
-      return Diff[diff]
+      // fmt.Printf("\r    U-USED DIF-F-FICULTY: %s = %d %+d\r", diff, int(maxdiff), -Diff[diff])
+      return int(maxdiff)-Diff[diff]
     }
   }
-  return Diff["/"]
+  // fmt.Printf("\r    U-USED DIF-F-FICULTY: %s = %d %+d\r", "/", int(maxdiff), -Diff["/"])
+  return int(maxdiff)-Diff["/"]
 }

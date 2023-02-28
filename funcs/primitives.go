@@ -9,6 +9,18 @@ import (
   _ "encoding/json"
 )
 
+var Elements map[string]string = map[string]string{
+  "Common": "None",
+  "Air": "Primitive",
+  "Fire": "Primitive",
+  // "Earth": "Primitive",
+  // "Water": "Primitive",
+  // "Void": "Exotic",
+  // "M": "+",
+  // "N": "+",
+  // "R": "++",
+}
+
 type Dot struct {
   Weight float64 `json:"Weight"`
   Element string `json:"Element,omitempty"`

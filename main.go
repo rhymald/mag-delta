@@ -27,6 +27,7 @@ var StatChain *blockchain.BlockChain //= blockchain.InitBlockChain(DBPath)
 var Frame plot.LogFrame = plot.CleanFrame()
 var Keys chan string = make(chan string)
 
+// open or generate chain
 func connect() string { //read app args and connect to db
   id := flag.String("p", "[no id defined]", "Player ID to login")
   flag.StringVar(&DBPath, "d", "cache", "Directory for cache")
@@ -39,6 +40,7 @@ func connect() string { //read app args and connect to db
   return *id
 }
 
+// get player from chain or create new
 func init() {
   id := connect()
   fmt.Printf("Login with player ID: \u001b[1m")
@@ -76,6 +78,7 @@ func init() {
   fmt.Scanln()
 }
 
+// interactive ui
 func main() {
   defer os.Exit(0)
   defer StatChain.Database.Close()
@@ -99,7 +102,7 @@ func main() {
           Action = " "
         default:
       }
-      if Target.Status.Health <= 0 { player.PlayerEmpower(&You, 0) ; player.FoeSpawn(&Target, (funcs.Vector(You.Basics.Streams.Cre,You.Basics.Streams.Alt,You.Basics.Streams.Des)/math.Sqrt(3)-1)+grow, &Frame.Foe) }
+      if Target.Status.Health <= 0 { player.PlayerEmpower(&You, 0, &Frame.Player) ; player.FoeSpawn(&Target, (funcs.Vector(You.Basics.Streams.Cre,You.Basics.Streams.Alt,You.Basics.Streams.Des)/math.Sqrt(3)-1)+grow, &Frame.Foe) }
     }
   }()
   for {

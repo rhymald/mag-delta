@@ -42,7 +42,6 @@ func FindByPrefixes(chain *BlockChain, prefix []byte) [][2][]byte {
   return playerList
 }
 
-
 func ensureDir(path string) error {
   err := os.Mkdir(path, 0755)
   if err == nil { return nil }
@@ -126,7 +125,7 @@ func ListBlocks(chain *BlockChain, namespace string, extended bool) {
   // var rows []string
   iter := iterator(chain, namespace)
   depth := 0
-  next := &block{Time: time.Now().UnixNano()-chain.Epoch, Namespace: namespace}
+  next := &block{Time: time.Now().UnixNano()-1317679200000000000-chain.Epoch, Namespace: namespace}
   if !extended {
     fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
     for i:=0; i<7; i++ {
