@@ -2,7 +2,6 @@ package client
 
 import (
   "fmt"
-  // "time"
   "rhymald/mag-delta/client/plot"
   "rhymald/mag-delta/player"
 )
@@ -11,29 +10,25 @@ func PlayerStatus(players ...player.Player) {
   it, foe, compare := players[0], player.Player{}, len(players) > 1
   if players[1].Status.Health <= 0 || players[0].Basics.ID.NPC { compare = false }
   if compare { foe = players[1] }
+
+  fmt.Print("    Health ")
+  plot.Baaar( it.Status.Health/it.Attributes.Vitality, 47, "right" )
+  fmt.Print("\n    ")
+  plot.Baaar( float64(len(it.Status.Pool))/it.Attributes.Poolsize, 47, "up" )
+  fmt.Print(" Energy\n")
+  fmt.Println()
+  if compare {
+    fmt.Print("    Foe ")
+    plot.Baaar( foe.Status.Health/foe.Attributes.Vitality, 50, "right" )
+    fmt.Print("\n\n")  
+  }
+
   playerTuple := [][]string{}
   fmt.Println(plot.Color("Player status",0),"[comparing to a foe]:")
   line := ""
   if compare {
     line = fmt.Sprintf(
-      "Health|Max: %0.0f|Current: %0.0f|Rate: %3.0f%%|[%3.0f%%]",
-      it.Attributes.Vitality,
-      it.Status.Health,
-      100*it.Status.Health/it.Attributes.Vitality,
-      100*foe.Status.Health/foe.Attributes.Vitality,
-    )
-  } else {
-    line = fmt.Sprintf(
-      "Health|Max: %0.0f|Current: %0.0f|Rate: %1.0f%%",
-      it.Attributes.Vitality,
-      it.Status.Health,
-      100*it.Status.Health/it.Attributes.Vitality,
-    )
-  }
-  playerTuple = plot.AddRow(line, playerTuple)
-  if compare {
-    line = fmt.Sprintf(
-      " \nPhysical|Size\n  %0.3f \n [%0.3f]|Endurance\n  %0.3f \n [%0.3f]|Strength\n  %0.3f \n [%0.3f]",
+      " \nPhysical|Toughness\n  %0.3f \n [%0.3f]|Agility\n  %0.3f \n [%0.3f]|Strength\n  %0.3f \n [%0.3f]",
       it.Basics.Body.Cre,
       foe.Basics.Body.Cre,
       it.Basics.Body.Alt,
@@ -43,7 +38,7 @@ func PlayerStatus(players ...player.Player) {
     )
   } else {
     line = fmt.Sprintf(
-      " \nPhysical|Size\n%0.3f|Endurance\n%0.3f|Strength\n%0.3f",
+      " \nPhysical|Toughness\n%0.3f|Agility\n%0.3f|Strength\n%0.3f",
       it.Basics.Body.Cre,
       it.Basics.Body.Alt,
       it.Basics.Body.Des,
@@ -74,12 +69,7 @@ func PlayerStatus(players ...player.Player) {
     )
   }
   playerTuple = plot.AddRow(line,playerTuple)
-  if compare {
-    line = fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%|[%0.0f]", it.Attributes.Poolsize, len(it.Status.Pool), 100*float64(len(it.Status.Pool))/float64(it.Attributes.Poolsize), foe.Attributes.Poolsize )
-  } else {
-    line = fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", it.Attributes.Poolsize, len(it.Status.Pool), 100*float64(len(it.Status.Pool))/float64(it.Attributes.Poolsize) )
-  }
-  playerTuple = plot.AddRow(line,playerTuple)
   plot.Table(playerTuple, false)
   fmt.Println()
 }
+

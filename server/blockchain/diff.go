@@ -4,7 +4,7 @@ import(
   "fmt"
   "github.com/dgraph-io/badger"
   "time"
-  "math"
+  // "math"
 )
 
 var Diff map[string]int = map[string]int{

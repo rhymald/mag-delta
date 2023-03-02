@@ -1,6 +1,6 @@
 module rhymald/mag-delta
 
-go 1.18
+go 1.19
 
 require github.com/dgraph-io/badger v1.6.2
 
