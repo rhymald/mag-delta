@@ -30,6 +30,7 @@ type BasicStats struct {
   Items []funcs.Stream `json:"Items,omitempty"`
 } // ^ stored in stats/spawn chains
 type CharStatus struct { // +heats +exp +consumables
+  ActionLog []funcs.Action `json:"ActionLog,omitempty"`
   XYZ [3]float64 `json:"XYZ"` // not used yet
   Health float64 `json:"Health"`
   Pool []funcs.Dot `json:"Pool,omitempty"`

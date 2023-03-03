@@ -33,6 +33,15 @@ type Stream struct {
   Element string `json:"Element,omitempty"`
 }
 
+type Action struct {
+  Time int64 `json:"Time"`
+  Kind string `json:"Kind"`
+  From string `json:"From"` // change then to direction for target
+  By []int `json:"By,omitempty"`
+  With []int `json:"With,omitempty"`
+  To string `json:"To"` // change then to direction for source
+} 
+
 func Epoch() int64 { return (time.Now().UnixNano()-1317679200000000000) }
 
 func Rand() float64 {

@@ -93,7 +93,7 @@ func main() {
       Keys <- string(b)
     }
   }()
-  go func () {
+  go func() {
     for {
       Action, _ := <-Keys
       switch Action {
