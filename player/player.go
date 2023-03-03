@@ -123,7 +123,7 @@ func Regeneration(pool *[]funcs.Dot, health *float64, alive bool, max float64, m
     if !(alive) { *logger = fmt.Sprintf("Not logged in yet. Stop Regeneration") ; break }
     if max-float64(len(*pool))<1 { time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) } else {
       dot := balance.Regeneration_DotWeight_FromStream(stream)
-      pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot.Weight, float64(len(*pool)), max)
+      pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot[stream.Element], float64(len(*pool)), max)
       heal := balance.Regeneration_Heal_FromBody(body)
       time.Sleep( time.Millisecond * time.Duration( pause ))
       // +break logout
@@ -131,11 +131,13 @@ func Regeneration(pool *[]funcs.Dot, health *float64, alive bool, max float64, m
       if !(alive) { *logger = fmt.Sprintf("Logged out") ; break }
       //block
       *pool = append(*pool, dot )
-      if *health >= maxhp {
-        *logger = fmt.Sprintf("          for %0.3fs +%s %0.3f'e ", pause/1000, dot.Element, dot.Weight)
+      for elem, weig := range dot {
+        if *health >= maxhp {
+          *logger = fmt.Sprintf("          for %0.3fs +%s %0.3f'e ", pause/1000, elem, weig)
         } else {
-          *logger = fmt.Sprintf("%+0.3f'hp for %0.3fs +%s %0.3f'e ", heal, pause/1000, dot.Element, dot.Weight)
+          *logger = fmt.Sprintf("%+0.3f'hp for %0.3fs +%s %0.3f'e ", heal, pause/1000, elem, weig)
         }
+      }
       if *health < maxhp { *health += heal } else { *health = maxhp }
       //unblock
     }
@@ -147,7 +149,7 @@ func Negeneration(health *float64, alive bool, maxhp float64, maxe float64, body
     if !(alive) { *logger = fmt.Sprintf("Not spawned yet. Stop Regeneration") ; break }
     if maxhp<=*health { time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) } else {
       dot := balance.Regeneration_DotWeight_FromStream(body)
-      pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot.Weight, funcs.Log(maxe), maxe)
+      pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot[body.Element], funcs.Log(maxe), maxe)
       heal := balance.Regeneration_Heal_FromBody(body)
       time.Sleep( time.Millisecond * time.Duration( pause ))
       // +break unspawn

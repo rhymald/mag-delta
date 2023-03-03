@@ -16,12 +16,13 @@ func BasicStats_Stream_FromNormaleWithElement(norm float64, element string) func
   return funcs.Stream{Cre: funcs.Rou(cre), Alt: funcs.Rou(alt), Des: funcs.Rou(des), Element: element}
 }
 
-func Regeneration_TimeoutMilliseconds_FromWeightPool(w float64, curr float64, max float64) float64 { return Regeneration_DefaultTimeout()/math.Sqrt( 2/( 1/(max-curr+1) + 1/(curr+1) )) }
+func Regeneration_TimeoutMilliseconds_FromWeightPool(w int, curr float64, max float64) float64 { return Regeneration_DefaultTimeout()/math.Sqrt( 2/( 1/(max-curr+1) + 1/(curr+1) )) }
 func Regeneration_Heal_FromBody(body funcs.Stream) float64 {return math.Sqrt(math.Log10(1+funcs.Vector(body.Cre,body.Des,body.Alt)))*(funcs.Rand()*0.2+0.9) }
 func Regeneration_DefaultTimeout() float64 {return 1024*math.Pi}
 func Regeneration_DotWeight_FromStream(stream funcs.Stream) funcs.Dot {
   w := funcs.Log(math.Cbrt(stream.Cre*stream.Des*stream.Alt))
-  return funcs.Dot{Element:stream.Element,Weight: funcs.Rou( w*(funcs.Rand()*0.2+0.9) ) }
+  return map[string]int{ stream.Element : funcs.ChancedRound(w*(funcs.Rand()*0.2+0.9)) }
+  // funcs.Dot{Element:stream.Element,Weight: funcs.Rou( w*(funcs.Rand()*0.2+0.9) ) }
 }
 
 func Cast_Common_Failed(need int, got int) bool { return funcs.Rand() >= math.Sqrt(float64(got)/float64(need)) }

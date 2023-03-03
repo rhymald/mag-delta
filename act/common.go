@@ -28,7 +28,7 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
   for i:=0; i<dotsForConsume; i++ {
     if len(*&caster.Status.Pool) == 0 { break }
     _, w, index := MinusDot(&(*&caster.Status.Pool))
-    damage += w
+    damage += float64(w)
     dotCounter++
     action.With = append(action.With, index)
     time.Sleep( time.Millisecond * time.Duration( pause ))
@@ -58,11 +58,14 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
 }
 
 // + MinusStamina
-func MinusDot(pool *[]funcs.Dot) (string, float64, int) {
+func MinusDot(pool *[]funcs.Dot) (string, int, int) {
   index := rand.New(rand.NewSource(time.Now().UnixNano())).Intn( len(*pool) )
   buffer := *pool
-  ddelement := buffer[index].Element
-  ddweight := buffer[index].Weight
+  ddelement, ddweight := "", 0 
+  for elem, weig := range buffer[index] {
+    ddelement = elem
+    ddweight = weig
+  }
   buffer[index] = buffer[len(buffer)-1]
   *pool = buffer[:len(buffer)-1]
   return ddelement, ddweight, index

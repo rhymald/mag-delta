@@ -40,9 +40,9 @@ Menu:
 # Versions
 - `0`: Dummies
   - `0.0` Player chain
-    - `0.0.1`: **Dummies slayer: Wrestless wood**  
+    - `0.0.1`: **NIF-N33** Dummies slayer: Wrestless wood  
       Jinx the wood! 
-    - `0.0.2`: Dummies slayer: natural phenomena  
+    - `0.0.2`: N33+ **Dummies slayer: natural phenomena**  
       Compressed objects.
   - `0.1` Spawn chain
     - `0.1.0`: TBD: Dummies' revenge

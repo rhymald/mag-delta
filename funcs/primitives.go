@@ -21,10 +21,10 @@ var Elements map[string]string = map[string]string{
   // "R": "++",
 }
 
-type Dot struct {
-  Weight float64 `json:"Weight"`
-  Element string `json:"Element,omitempty"`
-}
+type Dot map[string]int // struct {
+//   Weight float64 `json:"Weight"`
+//   Element string `json:"Element,omitempty"`
+// }
 
 type Stream struct {
   Cre float64 `json:"Cre"`
