@@ -2,101 +2,135 @@ package client
 
 import (
   "fmt"
-  "time"
   "rhymald/mag-delta/client/plot"
   "rhymald/mag-delta/player"
-  "os"
-  "os/exec"
+  "rhymald/mag-delta/balance"
 )
-
-func UI(Keys chan string, you player.Player, target player.Player) {
-  go func(Keys chan string) {
-    exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
-    exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
-    var b = make([]byte, 1)
-    for {
-      os.Stdin.Read(b)
-      Keys <- string(b)
-      plot.ShowMenu(string(b))
-      PlayerStatus(you, target)
-      time.Sleep( time.Millisecond * time.Duration( 128 ))
-    }
-  }(Keys)
-}
 
 func PlayerStatus(players ...player.Player) {
   it, foe, compare := players[0], player.Player{}, len(players) > 1
-  if players[1].Physical.Health.Current <= 0 { compare = false }
+  if players[1].Status.Health <= 0 || players[0].Basics.ID.NPC { compare = false }
   if compare { foe = players[1] }
+
+  fmt.Print("  Health ")
+  plot.Baaar( it.Status.Health/it.Attributes.Vitality, 50, "right" )
+  fmt.Print("\n  ")
+  plot.Baaar( float64(len(it.Status.Pool))/it.Attributes.Poolsize, 50, "fade" )
+  fmt.Print(" Energy\n")
+  fmt.Println()
+  if compare {
+    fmt.Print("  Dummy ")
+    plot.Baaar( foe.Status.Health/foe.Attributes.Vitality, 51, "up" )
+    fmt.Print("\n\n")  
+  }
+
   playerTuple := [][]string{}
   fmt.Println(plot.Color("Player status",0),"[comparing to a foe]:")
   line := ""
   if compare {
     line = fmt.Sprintf(
-      "Health|Max: %0.0f|Current: %0.0f|Rate: %3.0f%%|[%3.0f%%]",
-      it.Physical.Health.Max,
-      it.Physical.Health.Current,
-      100*it.Physical.Health.Current/it.Physical.Health.Max,
-      100*foe.Physical.Health.Current/foe.Physical.Health.Max,
+      " \nPhysical|Toughness\n  %0.3f \n [%0.3f]|Agility\n  %0.3f \n [%0.3f]|Strength\n  %0.3f \n [%0.3f]",
+      it.Basics.Body.Cre,
+      foe.Basics.Body.Cre,
+      it.Basics.Body.Alt,
+      foe.Basics.Body.Alt,
+      it.Basics.Body.Des,
+      foe.Basics.Body.Des,
     )
   } else {
     line = fmt.Sprintf(
-      "Health|Max: %0.0f|Current: %0.0f|Rate: %1.0f%%",
-      it.Physical.Health.Max,
-      it.Physical.Health.Current,
-      100*it.Physical.Health.Current/it.Physical.Health.Max,
+      " \nPhysical|Toughness\n%0.3f|Agility\n%0.3f|Strength\n%0.3f",
+      it.Basics.Body.Cre,
+      it.Basics.Body.Alt,
+      it.Basics.Body.Des,
     )
   }
-  playerTuple = plot.AddRow(line, playerTuple)
+  playerTuple = plot.AddRow(line,playerTuple)
+  yourAbilities := balance.StreamAbilities_FromStream(it.Basics.Streams)
+  foeAbilities := balance.StreamAbilities_FromStream(foe.Basics.Streams)
   if compare {
     line = fmt.Sprintf(
-      " \nPhysical|Complexion\n  %0.3f \n [%0.3f]|Endurance\n  %0.3f \n [%0.3f]|Strength\n  %0.3f \n [%0.3f]",
-      it.Physical.Body.Cre,
-      foe.Physical.Body.Cre,
-      it.Physical.Body.Alt,
-      foe.Physical.Body.Alt,
-      it.Physical.Body.Des,
-      foe.Physical.Body.Des,
+      " \n %s \n[%s]|Resistance\n  %0.3f \n [%0.3f]|Creation\n  %0.3f \n [%0.3f]|Alteration\n  %0.3f \n [%0.3f]|Destruction\n  %0.3f \n [%0.3f]",
+      it.Basics.Streams.Element,
+      foe.Basics.Streams.Element,
+      it.Attributes.Resistances[it.Basics.Streams.Element],
+      foe.Attributes.Resistances[foe.Basics.Streams.Element],
+      it.Basics.Streams.Cre,
+      foe.Basics.Streams.Cre,
+      it.Basics.Streams.Alt,
+      foe.Basics.Streams.Alt,
+      it.Basics.Streams.Des,
+      foe.Basics.Streams.Des,
     )
   } else {
     line = fmt.Sprintf(
-      " \nPhysical|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f",
-      it.Physical.Body.Cre,
-      it.Physical.Body.Alt,
-      it.Physical.Body.Des,
+      "Element\n%s|Resistance\n%0.3f|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f",
+      it.Basics.Streams.Element,
+      it.Attributes.Resistances[it.Basics.Streams.Element],
+      it.Basics.Streams.Cre,
+      it.Basics.Streams.Alt,
+      it.Basics.Streams.Des,
     )
   }
   playerTuple = plot.AddRow(line,playerTuple)
   if compare {
     line = fmt.Sprintf(
-      " \n %s \n[%s]|Creation\n  %0.3f \n [%0.3f]|Alteration\n  %0.3f \n [%0.3f]|Destruction\n  %0.3f \n [%0.3f]|Resistance\n  %0.3f \n [%0.3f]",
-      it.Nature.Stream.Element,
-      foe.Nature.Stream.Element,
-      it.Nature.Stream.Cre,
-      foe.Nature.Stream.Cre,
-      it.Nature.Stream.Alt,
-      foe.Nature.Stream.Alt,
-      it.Nature.Stream.Des,
-      foe.Nature.Stream.Des,
-      it.Nature.Resistance,
-      foe.Nature.Resistance,
+      " |Creation|  %+5.1f%% \n [%+5.1f%%]|  %+5.1f%% \n [%+5.1f%%]|  %+5.1f%% \n [%+5.1f%%]",
+      yourAbilities["Cad"]*100,
+      foeAbilities["Cad"]*100,
+      yourAbilities["Ca"]*100,
+      foeAbilities["Ca"]*100,
+      yourAbilities["Cd"]*100,
+      foeAbilities["Cd"]*100,
     )
   } else {
     line = fmt.Sprintf(
-      "Element\n%s|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f",
-      it.Nature.Stream.Element,
-      it.Nature.Stream.Cre,
-      it.Nature.Stream.Alt,
-      it.Nature.Stream.Des,
+      " |Creation|%+5.1f%%|%+5.1f%%|%+5.1f%%",
+      yourAbilities["Cad"]*100,
+      yourAbilities["Ca"]*100,
+      yourAbilities["Cd"]*100,
     )
   }
   playerTuple = plot.AddRow(line,playerTuple)
   if compare {
-    line = fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%|[%0.0f]", it.Nature.Pool.Max, len(it.Nature.Pool.Dots), 100*float64(len(it.Nature.Pool.Dots))/float64(it.Nature.Pool.Max), foe.Nature.Pool.Max )
+    line = fmt.Sprintf(
+      " |Alteration|  %+5.1f%% \n [%+5.1f%%]|  %+5.1f%% \n [%+5.1f%%]|  %+5.1f%% \n [%+5.1f%%]",
+      yourAbilities["Ac"]*100,
+      foeAbilities["Ac"]*100,
+      yourAbilities["Acd"]*100,
+      foeAbilities["Acd"]*100,
+      yourAbilities["Ad"]*100,
+      foeAbilities["Ad"]*100,
+    )
   } else {
-    line = fmt.Sprintf("Pool|Max: %0.0f|Current: %d|Rate: %1.0f%%", it.Nature.Pool.Max, len(it.Nature.Pool.Dots), 100*float64(len(it.Nature.Pool.Dots))/float64(it.Nature.Pool.Max) )
+    line = fmt.Sprintf(
+      " |Alteration|%+5.1f%%|%+5.1f%%|%+5.1f%%",
+      yourAbilities["Ac"]*100,
+      yourAbilities["Acd"]*100,
+      yourAbilities["Ad"]*100,
+    )
+  }
+  playerTuple = plot.AddRow(line,playerTuple)
+  if compare {
+    line = fmt.Sprintf(
+      " |Destruction|  %+5.1f%% \n [%+5.1f%%]|  %+5.1f%% \n [%+5.1f%%]|  %+5.1f%% \n [%+5.1f%%]",
+      yourAbilities["Dc"]*100,
+      foeAbilities["Dc"]*100,
+      yourAbilities["Da"]*100,
+      foeAbilities["Da"]*100,
+      yourAbilities["Dac"]*100,
+      foeAbilities["Dac"]*100,
+    )
+  } else {
+    line = fmt.Sprintf(
+      " |Creation|%+5.1f%%|%+5.1f%%|%+5.1f%%",
+      yourAbilities["Dc"]*100,
+      yourAbilities["Da"]*100,
+      yourAbilities["Dac"]*100,
+    )
   }
   playerTuple = plot.AddRow(line,playerTuple)
   plot.Table(playerTuple, false)
   fmt.Println()
 }
+

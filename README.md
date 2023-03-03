@@ -1,5 +1,59 @@
 ### Welcome!
-Developing game: mechanics are based on my novels. Trial number four! Here we go:
+Developing game: mechanics are based on my novels. Trial number four! 
+
+# Usage
+ For build with go v.18+: `go build .`  
+ For run with go v.18+: `go run . -p 1234-123456789 -d cache/bc`  
+
+Command:
+```bash
+mag-delta 
+
+    -h # for help
+    # Default: false
+
+    -p 0000-000000000 # player ID to login (insecure yet), 
+    # to be deprecated with built-in CLI client
+    # Default: [not defined]
+
+    -n # to generate new player, 
+    #to be deprecated with built-in CLI client
+    # Default: false
+
+    -d ./path # blockchain work directory, automatically created 
+    # Default: ./cache
+
+```
+
+# Gameplay
+Dummy is getting spawned in front of you.
+Destroy it as soon as possible!
+
+Skills:  
+- `e` to jinx target  
+  *Jinx - simle attacking skill with your energy, element: none (from the stream)*
+
+Menu: 
+- `/` to list chain meta
+- `?` to list parent blocks
+
+# Versions
+- `0`: Dummies
+  - `0.0` Player chain
+    - `0.0.1`: **Dummies slayer: Wrestless wood**  
+      Jinx the wood! 
+    - `0.0.2`: Dummies slayer: natural phenomena  
+      Compressed objects.
+  - `0.1` Spawn chain
+    - `0.1.0`: TBD: Dummies' revenge
+  - `0.2` P2P
+
+# Data scheme 
+`/` - Root, genesis block
+- `/Players` - last player created, initial player blocks (born blocks)
+  - `/Players/0000-000000000` - stats for user id 0000-000000000
+    - `/Session/0000-000000000/0-0000000` - session for player 0000-000000000 with stats 0-0000000  
+    - `/Session/0000-000000000` - latest session for player
 
 # Primitives basics:
 |Object|Properties|Description|
@@ -11,7 +65,7 @@ Developing game: mechanics are based on my novels. Trial number four! Here we go
 |Dot|Weight, Element|Energy point, most usable resource|
 
 
-# Phenomena basics:
+### Phenomena basics:
 Everything is natural phenomena!
 
 |v Minor / Major >|Cre|Alt|Des|
@@ -21,7 +75,7 @@ Everything is natural phenomena!
 |**Des**truction|Decay|Condition|Damage|
 |All|Summoning|Transfiguration|Disaster|
 
-Elements:
+### Elements:
 
 |Rarity|Element|Cre|Alt|Des|
 |---:|:---:|---|---|---|

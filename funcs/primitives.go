@@ -6,19 +6,43 @@ import (
   "crypto/sha512"
   "encoding/binary"
   "time"
+  _ "encoding/json"
 )
 
+var Elements map[string]string = map[string]string{
+  "Common": "None",
+  "Air": "Primitive",
+  "Fire": "Primitive",
+  // "Earth": "Primitive",
+  // "Water": "Primitive",
+  // "Void": "Exotic",
+  // "M": "+",
+  // "N": "+",
+  // "R": "++",
+}
+
 type Dot struct {
-  Weight float64
-  Element string
+  Weight float64 `json:"Weight"`
+  Element string `json:"Element,omitempty"`
 }
 
 type Stream struct {
-  Cre float64
-  Alt float64
-  Des float64
-  Element string
+  Cre float64 `json:"Cre"`
+  Alt float64 `json:"Alt"`
+  Des float64 `json:"Des"`
+  Element string `json:"Element,omitempty"`
 }
+
+type Action struct {
+  Time int64 `json:"Time"`
+  Kind string `json:"Kind"`
+  From string `json:"From"` // change then to direction for target
+  By []int `json:"By,omitempty"`
+  With []int `json:"With,omitempty"`
+  To string `json:"To"` // change then to direction for source
+} 
+
+func Epoch() int64 { return (time.Now().UnixNano()-1317679200000000000) }
 
 func Rand() float64 {
   x := (time.Now().UnixNano())
@@ -35,7 +59,7 @@ func Vector(props ...float64) float64 {
   return math.Sqrt(sum)
 }
 
-func LogF(n float64) float64 { return math.Log10(1+math.Abs(n))/math.Log10(math.Phi) }
+func Log(n float64) float64 { return math.Log10(1+math.Abs(n))/math.Log10(1.1479) }
 
 func ChancedRound(a float64) int {
   b,l:=math.Ceil(a),math.Floor(a)
@@ -53,6 +77,11 @@ func ChancedRand(i int) float64 {
     counter++
   }
   return randy
+}
+
+func Rou(x float64) float64 {
+  to := math.Pow10( int(math.Floor(math.Log10(x)-3)) )
+  return math.Floor(x/to)*to
 }
 
 func MeanStream(strs []Stream) Stream {

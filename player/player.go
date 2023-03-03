@@ -5,85 +5,156 @@ import (
   "rhymald/mag-delta/balance"
   "math"
   "fmt"
+  _ "encoding/json"
   "time"
+  "crypto/sha512"
+  "encoding/binary"
 )
 
+// need restruct: separate block of hp+mp+exp
 type Player struct {
-  Busy bool
-  // Physical
-  Physical struct {
-    Health struct {
-      Current float64
-      Max float64
-    }
-    Body funcs.Stream
-  }
-  // Energetical
-  Nature struct {
-    Resistance float64
-    Stream funcs.Stream
-    Pool struct {
-      Max float64
-      Dots []funcs.Dot
-    }
-  }
+  Basics BasicStats `json:"Basics"` // from stats chain
+  Status CharStatus `json:"Status"` // from state chain
+  Attributes CharAttributes `json:"Attributes,omitepmty"`
 }
 
-func PlayerBorn(player *Player, mean float64){
-  buffer := Player{}
-  buffer.Physical.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Common")
-  buffer.Physical.Health.Max = balance.BasicStats_MaxHP_FromBody(buffer.Physical.Body) // from db
-  buffer.Physical.Health.Current = math.Sqrt(buffer.Physical.Health.Max+1)-1 //from db
-  buffer.Nature.Stream = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, "Common")
-  buffer.Nature.Resistance = balance.BasicStats_Resistance_FromStream(buffer.Nature.Stream)
-  buffer.Nature.Pool.Max = balance.BasicStats_MaxPool_FromStream(buffer.Nature.Stream)
+type BasicStats struct {
+  ID struct {
+    NPC bool `json:"NPC"`
+    Name string `json:"Name,omitempty"`
+    Born int64 `json:"Born,omitempty"`
+    Last int64 `json:"Last,omitempty"`
+  } `json:"ID,omitempty"`
+  Body funcs.Stream `json:"Body"`
+  Streams funcs.Stream `json:"Streams"`
+  Items []funcs.Stream `json:"Items,omitempty"`
+} // ^ stored in stats/spawn chains
+type CharStatus struct { // +heats +exp +consumables
+  ActionLog []funcs.Action `json:"ActionLog,omitempty"`
+  XYZ [3]float64 `json:"XYZ"` // not used yet
+  Health float64 `json:"Health"`
+  Pool []funcs.Dot `json:"Pool,omitempty"`
+  InFocus []string `json:"InFocus,omitempty"` // 0 for target, 1+ other
+  Barrier map[string]float64 `json:"Barrier,omitempty"` // max hp mods per element
+} // ^ stored in status chain
+type CharAttributes struct { // +states
+  Login bool `json:"Login,omitempty"`
+  Busy bool `json:"Busy,omitempty"`
+  Vitality float64 `json:"Vitality,omitempty"`
+  Resistances map[string]float64 `json:"Resistances,omitempty"`
+  Poolsize float64 `json:"Poolsize,omitempty"`
+} // ^ calculated when login
+
+func PlayerEmpower(player *Player, mean float64, logger *string){ // immitation
+  *&player.Attributes.Login = false
+  time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() ))
+  *&player.Basics.ID.Last = funcs.Epoch()
+  CalculateAttributes_FromBasics(player)
+  Live(player, logger)
+}
+
+func Live(player *Player, logger *string) {
+  *&player.Attributes.Login = true
+  if player.Basics.ID.NPC {
+    go func(){ Negeneration(&(*&player.Status.Health), *&player.Attributes.Login, *&player.Attributes.Vitality, *&player.Attributes.Poolsize, *&player.Basics.Body, logger) }()
+  } else {
+    go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), *&player.Attributes.Login, *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body, logger) }()
+  }
+  // + start calm
+  // + start stamina
+}
+
+func GetID(player Player) (string, string) {
+  in_bytes := make([]byte, 8)
+  binary.LittleEndian.PutUint64(in_bytes, uint64(player.Basics.ID.Born))
+  pid := fmt.Sprintf("%X", sha512.Sum512(in_bytes))
+  binary.LittleEndian.PutUint64(in_bytes, uint64(player.Basics.ID.Last))
+  sid := fmt.Sprintf("%X", sha512.Sum512(in_bytes))
+  pstring := fmt.Sprintf("%X", pid)
+  sstring := fmt.Sprintf("%X", sid)
+  pfinal := fmt.Sprintf("%v-%v", pstring[:4], pstring[119:128])
+  sfinal := fmt.Sprintf("%v-%v", sstring[:1], sstring[121:128])
+  return pfinal, sfinal
+}
+
+func CalculateAttributes_FromBasics(player *Player){
+  buffer := *player
+  buffer.Attributes.Login = false
+  buffer.Attributes.Vitality = balance.BasicStats_MaxHP_FromBody(buffer.Basics.Body) // from db
+  resists := make(map[string]float64)
+  resists[buffer.Basics.Streams.Element] = balance.BasicStats_Resistance_FromStream(buffer.Basics.Streams)
+  buffer.Attributes.Resistances = resists
+  buffer.Attributes.Poolsize = balance.BasicStats_MaxPool_FromStream(buffer.Basics.Streams)
   *player = buffer
-  go func(){ Regeneration(&(*&player.Nature.Pool.Dots), &(*&player.Physical.Health.Current), *&player.Nature.Pool.Max, *&player.Physical.Health.Max, *&player.Nature.Stream, *&player.Physical.Body) }()
 }
 
-func FoeSpawn(foe *Player, mean float64) {
+func PlayerBorn(player *Player, mean float64, logger *string) string {
   buffer := Player{}
-  buffer.Physical.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Common")
-  buffer.Physical.Health.Max = balance.BasicStats_MaxHP_FromBody(buffer.Physical.Body) // from db
-  buffer.Physical.Health.Current = buffer.Physical.Health.Max / math.Sqrt2 //from db
-  buffer.Nature.Stream = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, "Common")
-  buffer.Nature.Resistance = balance.BasicStats_Resistance_FromStream(buffer.Nature.Stream)
-  buffer.Nature.Pool.Max = balance.BasicStats_MaxPool_FromStream(buffer.Nature.Stream)
-  *foe = buffer
-  go func(){ Negeneration(&(*&foe.Physical.Health.Current), *&foe.Physical.Health.Max, *&foe.Nature.Pool.Max, *&foe.Physical.Body) }()
+  buffer.Basics.ID.NPC = false
+  buffer.Basics.ID.Born = funcs.Epoch()
+  buffer.Basics.ID.Last = funcs.Epoch()
+  buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Physical")
+  buffer.Basics.Streams = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, "Common")
+  CalculateAttributes_FromBasics(&buffer)
+  buffer.Status.Health = math.Sqrt(buffer.Attributes.Vitality+1)-1 //from db
+  *player = buffer
+  Live(player, logger)
+  // go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body, logger) }()
+  pid, _ := GetID(buffer)
+  return fmt.Sprintf("/Session/%s", pid)
 }
 
-func Regeneration(pool *[]funcs.Dot, health *float64, max float64, maxhp float64, stream funcs.Stream, body funcs.Stream) {
+func FoeSpawn(foe *Player, mean float64, logger *string) { // old, new+ template Stream{}
+  buffer := Player{}
+  buffer.Basics.ID.NPC = true
+  buffer.Basics.ID.Born = funcs.Epoch()
+  buffer.Basics.ID.Last = funcs.Epoch()
+  buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Physical")
+  buffer.Basics.Streams = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, "Common")
+  CalculateAttributes_FromBasics(&buffer)
+  buffer.Status.Health = buffer.Attributes.Vitality / math.Sqrt2
+  *foe = buffer
+  Live(foe, logger)
+  // go func(){ Negeneration(&(*&foe.Status.Health), *&foe.Attributes.Vitality, *&foe.Attributes.Poolsize, *&foe.Basics.Body, logger) }()
+}
+
+func Regeneration(pool *[]funcs.Dot, health *float64, alive bool, max float64, maxhp float64, stream funcs.Stream, body funcs.Stream, logger *string) {
   for {
+    if !(alive) { *logger = fmt.Sprintf("Not logged in yet. Stop Regeneration") ; break }
     if max-float64(len(*pool))<1 { time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) } else {
       dot := balance.Regeneration_DotWeight_FromStream(stream)
       pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot.Weight, float64(len(*pool)), max)
       heal := balance.Regeneration_Heal_FromBody(body)
       time.Sleep( time.Millisecond * time.Duration( pause ))
+      // +break logout
+      if *health <= 0 { *logger = fmt.Sprintf("You are Died") ; break }
+      if !(alive) { *logger = fmt.Sprintf("Logged out") ; break }
       //block
-      if *health >= maxhp {
-        fmt.Printf("DEBUG[Player][Regeneration]: ░░░░░░░░░ for %0.3fs +%s %0.3f'e ░░░░░░░░░░░░░░░░░░\r", pause/1000, dot.Element, dot.Weight)
-      } else {
-        fmt.Printf("DEBUG[Player][Regeneration]: %+0.3f'hp for %0.3fs +%s %0.3f'e ░░░░░░░░░░░░░░░░░░\r", heal, pause/1000, dot.Element, dot.Weight)
-      }
       *pool = append(*pool, dot )
-      if *health <= 0 { fmt.Printf("DEBUG[Player][Regeneration]: ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ You are Died ░░░░░░░░░\n") ; break }
+      if *health >= maxhp {
+        *logger = fmt.Sprintf("          for %0.3fs +%s %0.3f'e ", pause/1000, dot.Element, dot.Weight)
+        } else {
+          *logger = fmt.Sprintf("%+0.3f'hp for %0.3fs +%s %0.3f'e ", heal, pause/1000, dot.Element, dot.Weight)
+        }
       if *health < maxhp { *health += heal } else { *health = maxhp }
       //unblock
     }
   }
 }
 
-func Negeneration(health *float64, maxhp float64, maxe float64, body funcs.Stream) {
+func Negeneration(health *float64, alive bool, maxhp float64, maxe float64, body funcs.Stream, logger *string) {
   for {
+    if !(alive) { *logger = fmt.Sprintf("Not spawned yet. Stop Regeneration") ; break }
     if maxhp<=*health { time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) } else {
       dot := balance.Regeneration_DotWeight_FromStream(body)
-      pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot.Weight, 0, maxe)
+      pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot.Weight, funcs.Log(maxe), maxe)
       heal := balance.Regeneration_Heal_FromBody(body)
       time.Sleep( time.Millisecond * time.Duration( pause ))
+      // +break unspawn
+      if *health <= 0 { *logger = fmt.Sprintf("Dummy: Foe died ") ; break }
+      if !(alive) { *logger = fmt.Sprintf("Unspawned") ; break }
       //block
-      if *health < maxhp { fmt.Printf("\rDEBUG[ NPC  ][Regeneration]: %+0.3f'hp for %0.3fs ░░░░░░░░░░░░░░░░░░░░░░░░░\r", heal, pause/1000) }
-      if *health <= 0 { fmt.Printf("DEBUG[ NPC  ][Regeneration]: Foe died ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░\n") ; break }
+      if *health < maxhp { *logger = fmt.Sprintf("Dummy: %+0.3f'hp for %0.3fs ", heal, pause/1000) }
       if *health < maxhp { *health += heal } else { *health = maxhp }
       //unblock
     }
