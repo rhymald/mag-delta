@@ -29,6 +29,7 @@ var Keys chan string = make(chan string)
 
 // open or generate chain
 func connect() string { //read app args and connect to db
+  for x:=0 ;x<9; x++ { fmt.Printf("   +[%s] ^[%s]\n", funcs.Elements[x], funcs.Physical[x%5]) }
   id := flag.String("p", "[no id defined]", "Player ID to login")
   flag.StringVar(&DBPath, "d", "cache", "Directory for cache")
   flag.BoolVar(&reborn, "n", false, "Create new player")

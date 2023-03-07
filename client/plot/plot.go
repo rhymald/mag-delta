@@ -27,33 +27,33 @@ func Table(tuple [][]string, compact bool) {
   //   for e, _ := range maxs { maxs[e] = int( float64(maxs[e])*modificator ) }
   // }
   //Head:
-  fmt.Printf(" ╔")
+  fmt.Printf("  ") //╔
   for i, wid := range maxs {
     for counter:=0 ;counter < wid; counter++ {
-      fmt.Printf("═")
+      fmt.Printf(" ") //═
     }
-    if i+1 == len(maxs) {fmt.Printf("╗\n")} else {fmt.Printf("╤")} //╤
+    if i+1 == len(maxs) {fmt.Printf(" \n")} else {fmt.Printf(" ")} //╤╗
   }
   //String:
   for I, row := range tuple {
     plotRow(row, maxs)
     if I+1 == len(tuple) {
       //Footer:
-      fmt.Printf(" ╚")
+      fmt.Printf("  ") //╚
       for i, wid := range maxs {
         for counter:=0 ;counter < wid; counter++ {
-          fmt.Printf("═")
+          fmt.Printf(" ")
         }
-        if i+1 == len(maxs) {fmt.Printf("╝\n")} else {fmt.Printf("╧")} //╧
+        if i+1 == len(maxs) {fmt.Printf(" \n")} else {fmt.Printf(" ")} //╧╝
       }
     } else {
       //Delimiter:
-      fmt.Printf(" ╟")
+      fmt.Printf("  ") //╟
       for i, wid := range maxs {
         for counter:=0 ;counter < wid; counter++ {
-          fmt.Printf("─")
+          fmt.Printf(" ") //─
         }
-        if i+1 == len(maxs) {fmt.Printf("╢\n")} else {fmt.Printf("┼")} //┼
+        if i+1 == len(maxs) {fmt.Printf(" \n")} else {fmt.Printf(" ")} //┼╢
       }
     }
   }
@@ -82,7 +82,7 @@ func findDelim(row []string) ([]int, int) {
 func plotRow(row []string, widths []int) {
   _, max := findDelim(row)
   for linenum:=0; linenum<max; linenum++ {
-    fmt.Printf(" ║")
+    fmt.Printf("  ") //║
     for i, wid := range widths {
       fmt.Printf(" ")
       cell := []string{" "}
@@ -93,8 +93,8 @@ func plotRow(row []string, widths []int) {
       for counter:=0 ;counter < wid-1-len( []rune(toprint) ); counter++ {
         fmt.Printf(" ")
       }
-      if i+1 == len(widths) {fmt.Printf("║\n")} else {
-        if row[i+1]=="" || row[i+1]==" " {fmt.Printf("│")} else {fmt.Printf("│")}
+      if i+1 == len(widths) {fmt.Printf(" \n")} else { //║
+        if row[i+1]=="" || row[i+1]==" " {fmt.Printf(" ")} else {fmt.Printf(" ")} //│
       }
     }
   }

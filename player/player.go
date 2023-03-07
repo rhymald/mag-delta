@@ -92,14 +92,13 @@ func PlayerBorn(player *Player, mean float64, logger *string) string {
   buffer := Player{}
   buffer.Basics.ID.NPC = false
   buffer.Basics.ID.Born = funcs.Epoch()
-  buffer.Basics.ID.Last = funcs.Epoch()
-  buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Physical")
-  buffer.Basics.Streams = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, "Common")
+  buffer.Basics.ID.Last = buffer.Basics.ID.Born
+  buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, funcs.Physical[1])
+  buffer.Basics.Streams = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, funcs.Elements[0])
   CalculateAttributes_FromBasics(&buffer)
   buffer.Status.Health = math.Sqrt(buffer.Attributes.Vitality+1)-1 //from db
   *player = buffer
   Live(player, logger)
-  // go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body, logger) }()
   pid, _ := GetID(buffer)
   return fmt.Sprintf("/Session/%s", pid)
 }
@@ -108,14 +107,13 @@ func FoeSpawn(foe *Player, mean float64, logger *string) { // old, new+ template
   buffer := Player{}
   buffer.Basics.ID.NPC = true
   buffer.Basics.ID.Born = funcs.Epoch()
-  buffer.Basics.ID.Last = funcs.Epoch()
-  buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, "Physical")
-  buffer.Basics.Streams = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, "Common")
+  buffer.Basics.ID.Last = buffer.Basics.ID.Born
+  buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, funcs.Physical[2])
+  buffer.Basics.Streams = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, funcs.Elements[0])
   CalculateAttributes_FromBasics(&buffer)
   buffer.Status.Health = buffer.Attributes.Vitality / math.Sqrt2
   *foe = buffer
   Live(foe, logger)
-  // go func(){ Negeneration(&(*&foe.Status.Health), *&foe.Attributes.Vitality, *&foe.Attributes.Poolsize, *&foe.Basics.Body, logger) }()
 }
 
 func Regeneration(pool *[]funcs.Dot, health *float64, alive bool, max float64, maxhp float64, stream funcs.Stream, body funcs.Stream, logger *string) {
@@ -133,12 +131,12 @@ func Regeneration(pool *[]funcs.Dot, health *float64, alive bool, max float64, m
       *pool = append(*pool, dot )
       for elem, weig := range dot {
         if *health >= maxhp {
-          *logger = fmt.Sprintf("          for %0.3fs +%s %0.3f'e ", pause/1000, elem, weig)
+          *logger = fmt.Sprintf("          for %0.3fs +%d'%s", pause/1000, weig, elem)
         } else {
-          *logger = fmt.Sprintf("%+0.3f'hp for %0.3fs +%s %0.3f'e ", heal, pause/1000, elem, weig)
+          *logger = fmt.Sprintf("%d'hp for %0.3fs +%d'%s", funcs.ChancedRound(heal), pause/1000, weig, elem)
         }
       }
-      if *health < maxhp { *health += heal } else { *health = maxhp }
+      if *health < maxhp { *health += float64(funcs.ChancedRound(heal)) } else { *health = maxhp }
       //unblock
     }
   }

@@ -9,22 +9,10 @@ import (
   _ "encoding/json"
 )
 
-var Elements map[string]string = map[string]string{
-  "Common": "None",
-  "Air": "Primitive",
-  "Fire": "Primitive",
-  // "Earth": "Primitive",
-  // "Water": "Primitive",
-  // "Void": "Exotic",
-  // "M": "+",
-  // "N": "+",
-  // "R": "++",
-}
+var Elements [9]string = [9]string{"◌ ", "🌪 ", "🔥", "🪨", "🧊", "🌑", "🩸", "🎶", "☀️ "}
+var Physical [5]string = [5]string{"◌ ", "🌱",  "🪵", "🪨", "🛡 "} // none, flesh/plant, wood/shell, stone, armored
 
-type Dot map[string]int // struct {
-//   Weight float64 `json:"Weight"`
-//   Element string `json:"Element,omitempty"`
-// }
+type Dot map[string]int 
 
 type Stream struct {
   Cre float64 `json:"Cre"`

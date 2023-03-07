@@ -35,7 +35,7 @@ func StreamStructure3(a float64, b float64, c float64, t float64) bool { if ( St
 func StreamAffinity2(a float64, b float64, t float64) float64 { return math.Pow(math.Log2(t/(a/b))/math.Log2(t), 2) }
 func StreamAffinity3(a float64, b float64, c float64, t float64) float64 { ab, ca := math.Max(a,b)/math.Min(a,b), math.Max(a,c)/math.Min(a,c) ; return math.Pow(math.Log2(t/(2/(1/ab+1/ca)))/math.Log2(t), 2)}
 func StreamAbilities_FromStream(str funcs.Stream) map[string]float64 {
-  rate := 1.1479 // resonating coefficient: bigger = more effect, - must be >1
+  rate := math.Phi // resonating coefficient: bigger = more effect, - must be >1
   buffer := make(map[string]float64)
   // Antibarrier (enchantment, poisoned weapon) = +AddDamage, +ticks, - if D>C close to each other
   if StreamStructure2(str.Des,str.Cre,str.Alt,rate) { buffer["Dc"] = StreamAffinity2(str.Des,str.Cre,rate) }

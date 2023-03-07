@@ -14,7 +14,7 @@ type LogFrame struct {
 func CleanFrame() LogFrame {
   buffer := LogFrame{}
   buffer.Player = ""
-  buffer.Size = 32
+  buffer.Size = 10
   buffer.Actions = append(buffer.Actions," ")
   buffer.Actions = append(buffer.Actions,"Welcome!")
   buffer.Actions = append(buffer.Actions,"Here you can find a list of actions you have made.")
