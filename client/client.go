@@ -22,14 +22,14 @@ func PlayerStatus(players ...player.Player) {
   if compare { foe = players[1] }
 
   fmt.Print("  Health ")
-  plot.Baaar( it.Status.Health/it.Attributes.Vitality, 50, "right" )
+  plot.Baaar( float64(it.Status.Health)/1000 , 50, "right" )
   fmt.Print("\n  ")
   plot.Baaar( float64(len(it.Status.Pool))/it.Attributes.Poolsize, 50, "fade" )
   fmt.Print(" Energy\n")
   fmt.Println()
   if compare {
     fmt.Print("  Dummy ")
-    plot.Baaar( foe.Status.Health/foe.Attributes.Vitality, 51, "up" )
+    plot.Baaar( float64(foe.Status.Health)/1000, 51, "up" )
     fmt.Print("\n\n")  
   }
 

@@ -31,10 +31,10 @@ type BasicStats struct {
 } // ^ stored in stats/spawn chains
 type CharStatus struct { // +heats +exp +consumables
   ActionLog []funcs.Action `json:"ActionLog,omitempty"`
-  XYZ [3]float64 `json:"XYZ"` // not used yet
-  Health float64 `json:"Health"`
+  XYZ [3]int `json:"XYZ"` // not used yet
+  Health int `json:"Health"`
   Pool []funcs.Dot `json:"Pool,omitempty"`
-  InFocus []string `json:"InFocus,omitempty"` // 0 for target, 1+ other
+  // InFocus []string `json:"InFocus,omitempty"` // 0 for target, 1+ other
   Barrier map[string]float64 `json:"Barrier,omitempty"` // max hp mods per element
 } // ^ stored in status chain
 type CharAttributes struct { // +states
@@ -96,7 +96,7 @@ func PlayerBorn(player *Player, mean float64, logger *string) string {
   buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, funcs.Physical[1])
   buffer.Basics.Streams = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, funcs.Elements[0])
   CalculateAttributes_FromBasics(&buffer)
-  buffer.Status.Health = math.Sqrt(buffer.Attributes.Vitality+1)-1 //from db
+  buffer.Status.Health = int(1000/math.Sqrt(buffer.Attributes.Vitality)) //from db
   *player = buffer
   Live(player, logger)
   pid, _ := GetID(buffer)
@@ -111,18 +111,22 @@ func FoeSpawn(foe *Player, mean float64, logger *string) { // old, new+ template
   buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, funcs.Physical[2])
   buffer.Basics.Streams = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, funcs.Elements[0])
   CalculateAttributes_FromBasics(&buffer)
-  buffer.Status.Health = buffer.Attributes.Vitality / math.Sqrt2
+  buffer.Status.Health = 618
   *foe = buffer
   Live(foe, logger)
 }
 
-func Regeneration(pool *[]funcs.Dot, health *float64, alive bool, max float64, maxhp float64, stream funcs.Stream, body funcs.Stream, logger *string) {
+func Regeneration(pool *[]funcs.Dot, health *int, alive bool, max float64, vitality float64, stream funcs.Stream, body funcs.Stream, logger *string) {
   for {
     if !(alive) { *logger = fmt.Sprintf("Not logged in yet. Stop Regeneration") ; break }
-    if max-float64(len(*pool))<1 { time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) } else {
+    if max-float64(len(*pool))<1 { 
+      time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) 
+      *logger = fmt.Sprintf("Energy full, regeneration paused. ")
+    } else {
       dot := balance.Regeneration_DotWeight_FromStream(stream)
       pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot[stream.Element], float64(len(*pool)), max)
-      heal := balance.Regeneration_Heal_FromBody(body)
+      hpause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot[body.Element], float64(len(*pool)), max)
+      heal := balance.Regeneration_Heal_FromBody(body) * pause/hpause
       time.Sleep( time.Millisecond * time.Duration( pause ))
       // +break logout
       if *health <= 0 { *logger = fmt.Sprintf("You are Died") ; break }
@@ -130,22 +134,25 @@ func Regeneration(pool *[]funcs.Dot, health *float64, alive bool, max float64, m
       //block
       *pool = append(*pool, dot )
       for elem, weig := range dot {
-        if *health >= maxhp {
+        if *health >= 1000 {
           *logger = fmt.Sprintf("          for %0.3fs +%d'%s", pause/1000, weig, elem)
         } else {
           *logger = fmt.Sprintf("%d'hp for %0.3fs +%d'%s", funcs.ChancedRound(heal), pause/1000, weig, elem)
         }
       }
-      if *health < maxhp { *health += float64(funcs.ChancedRound(heal)) } else { *health = maxhp }
+      if *health < 1000 { *health += funcs.ChancedRound( heal*1000/vitality ) } else { *health = 1000 }
       //unblock
     }
   }
 }
 
-func Negeneration(health *float64, alive bool, maxhp float64, maxe float64, body funcs.Stream, logger *string) {
+func Negeneration(health *int, alive bool, vitality float64, maxe float64, body funcs.Stream, logger *string) {
   for {
     if !(alive) { *logger = fmt.Sprintf("Not spawned yet. Stop Regeneration") ; break }
-    if maxhp<=*health { time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) } else {
+    if 1000 <= *health { 
+      time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) 
+      *logger = fmt.Sprintf("Health full, regeneration paused. ")
+    } else {
       dot := balance.Regeneration_DotWeight_FromStream(body)
       pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot[body.Element], funcs.Log(maxe), maxe)
       heal := balance.Regeneration_Heal_FromBody(body)
@@ -154,8 +161,8 @@ func Negeneration(health *float64, alive bool, maxhp float64, maxe float64, body
       if *health <= 0 { *logger = fmt.Sprintf("Dummy: Foe died ") ; break }
       if !(alive) { *logger = fmt.Sprintf("Unspawned") ; break }
       //block
-      if *health < maxhp { *logger = fmt.Sprintf("Dummy: %+0.3f'hp for %0.3fs ", heal, pause/1000) }
-      if *health < maxhp { *health += heal } else { *health = maxhp }
+      if *health < 1000 { *logger = fmt.Sprintf("Dummy: %d'hp for %0.3fs ", funcs.ChancedRound(heal), pause/1000) }
+      if *health < 1000 { *health += funcs.ChancedRound( heal*1000/vitality ) } else { *health = 1000 }
       //unblock
     }
   }

@@ -49,6 +49,8 @@ func Vector(props ...float64) float64 {
 
 func Log(n float64) float64 { return math.Log10(1+math.Abs(n))/math.Log10(1.1479) }
 
+func CeilRound(a float64) int { return int(math.Ceil(a)) }
+func FloorRound(a float64) int { return int(math.Floor(a)) }
 func ChancedRound(a float64) int {
   b,l:=math.Ceil(a),math.Floor(a)
   c:=math.Abs(math.Abs(a)-math.Abs(math.Min(b, l)))

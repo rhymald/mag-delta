@@ -35,6 +35,7 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
   }
   *&caster.Attributes.Busy = false
   // actions logging for anticheat? 
+  // TBRefactored for less duplication
   affection := action
   cpid, csid := player.GetID(*caster)
   tpid, tsid := player.GetID(*target)
@@ -49,7 +50,7 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
     plot.AddAction(logs, fmt.Sprintf("%s From: %0.1f damage as %d sent for %.0f ms", castId, damage, dotsForConsume, pause*float64(dotsForConsume)))
     go func(){
       time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
-      *&target.Status.Health += -damage*(caster.Basics.Streams.Des/(target.Attributes.Resistances[caster.Basics.Streams.Element]))
+      *&target.Status.Health += funcs.ChancedRound(-damage*(caster.Basics.Streams.Des/(target.Attributes.Resistances[caster.Basics.Streams.Element]))*1000/target.Attributes.Vitality)
       plot.AddAction(logs, fmt.Sprintf("%s To:   %0.1f damage received after %.0f ms ", castId, damage*(caster.Basics.Streams.Des/(target.Attributes.Resistances[caster.Basics.Streams.Element])), reach))
       if *&target.Status.Health < 0 { *&target.Status.Health = 0 }
       // +exp?

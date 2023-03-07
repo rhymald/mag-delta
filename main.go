@@ -16,20 +16,24 @@ import (
   "flag"
 )
 
-var DBPath string //= "./cache"
-var playerID string
-var reborn bool = false
+var (
+  // arguments: 
+  DBPath string //= "./cache"
+  playerID string
+  reborn bool = false
+  // objects: 
+  You player.Player
+  Target player.Player
+  StatChain *blockchain.BlockChain //= blockchain.InitBlockChain(DBPath)
+  // CLI (TBDeprecated): 
+  Frame plot.LogFrame = plot.CleanFrame()
+  Keys chan string = make(chan string)
+)
 
-var You player.Player
-var Target player.Player
-var StatChain *blockchain.BlockChain //= blockchain.InitBlockChain(DBPath)
-
-var Frame plot.LogFrame = plot.CleanFrame()
-var Keys chan string = make(chan string)
-
-// open or generate chain
+// read args, open or generate chain
 func connect() string { //read app args and connect to db
-  for x:=0 ;x<9; x++ { fmt.Printf("   +[%s] ^[%s]\n", funcs.Elements[x], funcs.Physical[x%5]) }
+  for x:=0 ;x<len(funcs.Elements); x++ { fmt.Printf(" ^[%s]%.3f ", funcs.Elements[x], math.Pow(math.Sqrt(math.Log2(float64(x)+2))-1, 2)+1 ) } ; fmt.Println()
+  for x:=0 ;x<len(funcs.Physical); x++ { fmt.Printf(" x[%s]%.3f ", funcs.Physical[x], math.Pow(math.Log2(float64(x)+1), 2) ) } ; fmt.Println()
   id := flag.String("p", "[no id defined]", "Player ID to login")
   flag.StringVar(&DBPath, "d", "cache", "Directory for cache")
   flag.BoolVar(&reborn, "n", false, "Create new player")
