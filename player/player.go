@@ -56,9 +56,9 @@ func PlayerEmpower(player *Player, mean float64, logger *string){ // immitation
 func Live(player *Player, logger *string) {
   *&player.Attributes.Login = true
   if player.Basics.ID.NPC {
-    go func(){ Negeneration(&(*&player.Status.Health), *&player.Attributes.Login, *&player.Attributes.Vitality, *&player.Attributes.Poolsize, *&player.Basics.Body, logger) }()
+    go func(){ Negeneration(&(*&player.Status.Health), &(*&player.Attributes.Login), *&player.Attributes.Vitality, *&player.Attributes.Poolsize, *&player.Basics.Body, logger) }()
   } else {
-    go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), *&player.Attributes.Login, *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body, logger) }()
+    go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), &(*&player.Attributes.Login), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body, logger) }()
   }
   // + start calm
   // + start stamina
@@ -117,9 +117,9 @@ func FoeSpawn(foe *Player, mean float64, logger *string) { // old, new+ template
   Live(foe, logger)
 }
 
-func Regeneration(pool *[]funcs.Dot, health *int, alive bool, max float64, vitality float64, stream funcs.Stream, body funcs.Stream, logger *string) {
+func Regeneration(pool *[]funcs.Dot, health *int, alive *bool, max float64, vitality float64, stream funcs.Stream, body funcs.Stream, logger *string) {
   for {
-    if !(alive) { *logger = fmt.Sprintf("Not logged in yet. Stop Regeneration") ; break }
+    if *alive != true { *logger = fmt.Sprintf("Not logged in yet. Stop Regeneration") ; break }
     if max-float64(len(*pool))<1 { 
       time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) 
       *logger = fmt.Sprintf("Energy full, regeneration paused. ")
@@ -132,7 +132,7 @@ func Regeneration(pool *[]funcs.Dot, health *int, alive bool, max float64, vital
       time.Sleep( time.Millisecond * time.Duration( pause ))
       // +break logout
       if *health <= 0 { *logger = fmt.Sprintf("You are Died") ; break }
-      if !(alive) { *logger = fmt.Sprintf("Logged out") ; break }
+      if *alive != true { *logger = fmt.Sprintf("Logged out") ; break }
       //block
       *pool = append(*pool, dot )
       for elem, weig := range dot {
@@ -148,9 +148,9 @@ func Regeneration(pool *[]funcs.Dot, health *int, alive bool, max float64, vital
   }
 }
 
-func Negeneration(health *int, alive bool, vitality float64, maxe float64, body funcs.Stream, logger *string) {
+func Negeneration(health *int, alive *bool, vitality float64, maxe float64, body funcs.Stream, logger *string) {
   for {
-    if !(alive) { *logger = fmt.Sprintf("Not spawned yet. Stop Regeneration") ; break }
+    if *alive != true { *logger = fmt.Sprintf("Not spawned yet. Stop Regeneration") ; break }
     if 1000 <= *health { 
       time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) 
       *logger = fmt.Sprintf("Health full, regeneration paused. ")
@@ -162,7 +162,7 @@ func Negeneration(health *int, alive bool, vitality float64, maxe float64, body 
       time.Sleep( time.Millisecond * time.Duration( pause ))
       // +break unspawn
       if *health <= 0 { *logger = fmt.Sprintf("Dummy: Foe died ") ; break }
-      if !(alive) { *logger = fmt.Sprintf("Unspawned") ; break }
+      if *alive != true { *logger = fmt.Sprintf("Unspawned") ; break }
       //block
       if *health < 1000 { *logger = fmt.Sprintf("Dummy: %d'hp for %0.3fs ", funcs.ChancedRound(heal), pause/1000) }
       if *health < 1000 { *health += funcs.ChancedRound( heal*1000/vitality ) } else { *health = 1000 }
