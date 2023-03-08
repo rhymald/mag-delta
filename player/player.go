@@ -82,7 +82,8 @@ func CalculateAttributes_FromBasics(player *Player){
   buffer.Attributes.Login = false
   buffer.Attributes.Vitality = balance.BasicStats_MaxHP_FromBody(buffer.Basics.Body) // from db
   resists := make(map[string]float64)
-  resists[buffer.Basics.Streams.Element] = balance.BasicStats_Resistance_FromStream(buffer.Basics.Streams)
+  elem, _ := funcs.ReStr(buffer.Basics.Streams)
+  resists[elem] = balance.BasicStats_Resistance_FromStream(buffer.Basics.Streams)
   buffer.Attributes.Resistances = resists
   buffer.Attributes.Poolsize = balance.BasicStats_MaxPool_FromStream(buffer.Basics.Streams)
   *player = buffer
@@ -123,9 +124,10 @@ func Regeneration(pool *[]funcs.Dot, health *int, alive bool, max float64, vital
       time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) 
       *logger = fmt.Sprintf("Energy full, regeneration paused. ")
     } else {
+      elem, _ := funcs.ReStr(stream)
       dot := balance.Regeneration_DotWeight_FromStream(stream)
-      pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot[stream.Element], float64(len(*pool)), max)
-      hpause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot[body.Element], float64(len(*pool)), max)
+      pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot[elem], float64(len(*pool)), max)
+      hpause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot[elem], float64(len(*pool)), max)
       heal := balance.Regeneration_Heal_FromBody(body) * pause/hpause
       time.Sleep( time.Millisecond * time.Duration( pause ))
       // +break logout
@@ -154,7 +156,8 @@ func Negeneration(health *int, alive bool, vitality float64, maxe float64, body 
       *logger = fmt.Sprintf("Health full, regeneration paused. ")
     } else {
       dot := balance.Regeneration_DotWeight_FromStream(body)
-      pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot[body.Element], funcs.Log(maxe), maxe)
+      elem, _ := funcs.ReStr(body)
+      pause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot[elem], funcs.Log(maxe), maxe)
       heal := balance.Regeneration_Heal_FromBody(body)
       time.Sleep( time.Millisecond * time.Duration( pause ))
       // +break unspawn

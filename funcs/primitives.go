@@ -9,17 +9,16 @@ import (
   _ "encoding/json"
 )
 
-var Elements [9]string = [9]string{"◌ ", "🌪 ", "🔥", "🪨", "🧊", "🌑", "🩸", "🎶", "☀️ "}
+var Elements [9]string = [9]string{"◌ ", "🌪 ", "🔥", "🪨", "🧊", "🌑", "🩸", "🎶", "☀️ "} 
 var Physical [5]string = [5]string{"◌ ", "🌱",  "🪵", "🪨", "🛡 "} // none, flesh/plant, wood/shell, stone, armored
 
 type Dot map[string]int 
+type Stream map[string][3]int
 
-type Stream struct {
-  Cre float64 `json:"Cre"`
-  Alt float64 `json:"Alt"`
-  Des float64 `json:"Des"`
-  Element string `json:"Element,omitempty"`
-}
+func ReStr(stream Stream) (string, [3]float64) {
+  for e, stats := range stream { return e, [3]float64{ float64(stats[0])/1000, float64(stats[1])/1000, float64(stats[2])/1000 } } 
+  return "ERROR", [3]float64{0,0,0} 
+} 
 
 type Action struct {
   Time int64 `json:"Time"`
@@ -74,9 +73,9 @@ func Rou(x float64) float64 {
   return math.Floor(x/to)*to
 }
 
-func MeanStream(strs []Stream) Stream {
-  mean := Stream{}
-  for _, each := range strs { mean.Alt += 1/each.Alt ; mean.Cre += 1/each.Cre ; mean.Des += 1/each.Des }
-  mean.Alt, mean.Cre, mean.Des = float64(len(strs))/mean.Alt, float64(len(strs))/mean.Cre, float64(len(strs))/mean.Des
-  return mean
-}
+// func MeanStream(strs []Stream) Stream {
+//   mean := Stream{}
+//   for _, each := range strs { mean.Alt += 1/each.Alt ; mean.Cre += 1/each.Cre ; mean.Des += 1/each.Des }
+//   mean.Alt, mean.Cre, mean.Des = float64(len(strs))/mean.Alt, float64(len(strs))/mean.Cre, float64(len(strs))/mean.Des
+//   return mean
+// }

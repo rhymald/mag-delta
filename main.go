@@ -32,8 +32,8 @@ var (
 
 // read args, open or generate chain
 func connect() string { //read app args and connect to db
-  for x:=0 ;x<len(funcs.Elements); x++ { fmt.Printf(" ^[%s]%.3f ", funcs.Elements[x], math.Pow(math.Sqrt(math.Log2(float64(x)+2))-1, 2)+1 ) } ; fmt.Println()
   for x:=0 ;x<len(funcs.Physical); x++ { fmt.Printf(" x[%s]%.3f ", funcs.Physical[x], math.Pow(math.Log2(float64(x)+1), 2) ) } ; fmt.Println()
+  for x:=0 ;x<3; x++ { fmt.Printf(" ^[%s]%.3f ", funcs.Elements[x], math.Pow(math.Sqrt(math.Log2(float64(x)+2))-1, 2)+1 ) } ; fmt.Println()
   id := flag.String("p", "[no id defined]", "Player ID to login")
   flag.StringVar(&DBPath, "d", "cache", "Directory for cache")
   flag.BoolVar(&reborn, "n", false, "Create new player")
@@ -107,7 +107,11 @@ func main() {
           Action = " "
         default:
       }
-      if Target.Status.Health <= 0 { player.PlayerEmpower(&You, 0, &Frame.Player) ; player.FoeSpawn(&Target, (funcs.Vector(You.Basics.Streams.Cre,You.Basics.Streams.Alt,You.Basics.Streams.Des)/math.Sqrt(3)-1)+grow, &Frame.Foe) }
+      if Target.Status.Health <= 0 { 
+        player.PlayerEmpower(&You, 0, &Frame.Player) 
+        _, stats := funcs.ReStr(You.Basics.Streams)
+        player.FoeSpawn(&Target, (funcs.Vector(stats[0],stats[1],stats[2])/math.Sqrt(3)-1)+grow, &Frame.Foe)
+      }
     }
   }()
   for {

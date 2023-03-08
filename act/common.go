@@ -11,9 +11,9 @@ import (
   "fmt"
 )
 
-// +Punch(Da) +Sting(Ad) - [physicals]
+// +Punch(Da) +Sting(Ad) +Block(C) - [physicals]
 func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
-  action := funcs.Action{ Time: (time.Now().UnixNano()/1000000) , Kind: "Jinx" }
+  action := funcs.Action{ Time: (funcs.Epoch()/1000000) , Kind: "Jinx" }
   castId := fmt.Sprintf("%s#%3d", action.Kind, action.Time%1000)
   if *&caster.Attributes.Busy { plot.AddAction(logs, fmt.Sprintf("%s Fail: player is busy", castId)) ; return }
   if !(*&caster.Attributes.Login) || !(*&target.Attributes.Login) { plot.AddAction(logs, fmt.Sprintf("%s Fail: no player / no target", castId)) ; return }
@@ -49,9 +49,10 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
   } else {
     plot.AddAction(logs, fmt.Sprintf("%s From: %0.1f damage as %d sent for %.0f ms", castId, damage, dotsForConsume, pause*float64(dotsForConsume)))
     go func(){
+      elem, stats := funcs.ReStr(caster.Basics.Streams)
       time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
-      *&target.Status.Health += funcs.ChancedRound(-damage*(caster.Basics.Streams.Des/(target.Attributes.Resistances[caster.Basics.Streams.Element]))*1000/target.Attributes.Vitality)
-      plot.AddAction(logs, fmt.Sprintf("%s To:   %0.1f damage received after %.0f ms ", castId, damage*(caster.Basics.Streams.Des/(target.Attributes.Resistances[caster.Basics.Streams.Element])), reach))
+      *&target.Status.Health += funcs.ChancedRound(-damage*(stats[2]/(target.Attributes.Resistances[elem]))*1000/target.Attributes.Vitality)
+      plot.AddAction(logs, fmt.Sprintf("%s To:   %0.1f damage received after %.0f ms ", castId, damage*(stats[2]/(target.Attributes.Resistances[elem])), reach))
       if *&target.Status.Health < 0 { *&target.Status.Health = 0 }
       // +exp?
     }()

@@ -34,9 +34,6 @@ func AssumePlayer(chain *blockchain.BlockChain, id string, logger *string) playe
   })
   if err != nil { fmt.Println(err) } else { dummy.Status = stateFromJson(string(stateJson), dummy.Status) }
   player.CalculateAttributes_FromBasics(&dummy)
-  // if dummy.Basics.ID.Born != 0 {
-  //   go func(){ player.Regeneration(&(*&dummy.Status.Pool), &(*&dummy.Status.Health), *&dummy.Attributes.Poolsize, *&dummy.Attributes.Vitality, *&dummy.Basics.Streams, *&dummy.Basics.Body, logger) }()
-  // }
   return dummy
 }
 

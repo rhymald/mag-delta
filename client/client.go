@@ -20,74 +20,82 @@ func PlayerStatus(players ...player.Player) {
   it, foe, compare := players[0], player.Player{}, len(players) > 1
   if players[1].Status.Health <= 0 || players[0].Basics.ID.NPC { compare = false }
   if compare { foe = players[1] }
-
+  // health and mana bars
   fmt.Print("  Health ")
   plot.Baaar( float64(it.Status.Health)/1000 , 50, "right" )
-  fmt.Print("\n  ")
-  plot.Baaar( float64(len(it.Status.Pool))/it.Attributes.Poolsize, 50, "fade" )
-  fmt.Print(" Energy\n")
+  fmt.Printf(" [%.0f]\n  ", it.Attributes.Vitality)
+  plot.Baaar( float64(len(it.Status.Pool))/it.Attributes.Poolsize, 50, "up" )
+  fmt.Printf(" Energy [%.0f]\n", it.Attributes.Poolsize)
   fmt.Println()
   if compare {
     fmt.Print("  Dummy ")
-    plot.Baaar( float64(foe.Status.Health)/1000, 51, "up" )
-    fmt.Print("\n\n")  
+    plot.Baaar( float64(foe.Status.Health)/1000, 51, "fade" )
+    fmt.Printf(" [%.0f]\n\n", foe.Attributes.Vitality)  
   }
-
+  // stats tuple preparation
   playerTuple := [][]string{}
   fmt.Println(plot.Color("\nPlayer status",0),"[comparing to a foe]:")
   line := ""
   if compare {
+    itelem, itstats := funcs.ReStr(it.Basics.Body)
+    foelem, foestats := funcs.ReStr(foe.Basics.Body)  
     line = fmt.Sprintf(
-      "Physical\n    %s\n   [%s]|Toughness\n   %0.3f \n  [%0.3f]|Agility\n   %0.3f \n  [%0.3f]|Strength\n   %0.3f \n  [%0.3f]",
-      elemTotStr(it.Basics.Body.Element),
-      elemTotStr(foe.Basics.Body.Element),
-      it.Basics.Body.Cre,
-      foe.Basics.Body.Cre,
-      it.Basics.Body.Alt,
-      foe.Basics.Body.Alt,
-      it.Basics.Body.Des,
-      foe.Basics.Body.Des,
+      "Physical\n    %s\n   [%s]|Toughness\n   %.3f \n  [%.3f]|Agility\n   %.3f \n  [%.3f]|Strength\n   %.3f \n  [%.3f]",
+      elemTotStr(itelem),
+      elemTotStr(foelem),
+      itstats[0],
+      foestats[0],
+      itstats[1],
+      foestats[1],
+      itstats[2],
+      foestats[2],
     )
   } else {
+    elem, stats := funcs.ReStr(it.Basics.Body)
     line = fmt.Sprintf(
-      "Physical\n    %s|Toughness\n%0.3f|Agility\n%0.3f|Strength\n%0.3f",
-      elemTotStr(it.Basics.Body.Element),
-      it.Basics.Body.Cre,
-      it.Basics.Body.Alt,
-      it.Basics.Body.Des,
+      "Physical\n    %s|Toughness\n%.3f|Agility\n%.3f|Strength\n%.3f",
+      elemTotStr(elem),
+      stats[0],
+      stats[1],
+      stats[2],
     )
   }
   playerTuple = plot.AddRow(line,playerTuple)
   yourAbilities := balance.StreamAbilities_FromStream(it.Basics.Streams)
   foeAbilities := balance.StreamAbilities_FromStream(foe.Basics.Streams)
   if compare {
+    itelem, itstats := funcs.ReStr(it.Basics.Streams)
+    foelem, foestats := funcs.ReStr(foe.Basics.Streams)  
     line = fmt.Sprintf(
-      "Energy \n    %s \n   [%s]|Resistance\n   %0.3f \n  [%0.3f]|Creation\n   %0.3f \n  [%0.3f]|Alteration\n   %0.3f \n  [%0.3f]|Destruction\n   %0.3f \n  [%0.3f]",
-      elemTotStr(it.Basics.Streams.Element),
-      elemTotStr(foe.Basics.Streams.Element),
-      it.Attributes.Resistances[it.Basics.Streams.Element],
-      foe.Attributes.Resistances[foe.Basics.Streams.Element],
-      it.Basics.Streams.Cre,
-      foe.Basics.Streams.Cre,
-      it.Basics.Streams.Alt,
-      foe.Basics.Streams.Alt,
-      it.Basics.Streams.Des,
-      foe.Basics.Streams.Des,
+      "Energy \n    %s\n   [%s]|Resistance\n %.3f  [%.3f] \n[%.3f]  %.3f|Creation\n   %.3f \n  [%.3f]|Alteration\n   %.3f \n  [%.3f]|Destruction\n   %.3f \n  [%.3f]",
+      elemTotStr(itelem),
+      elemTotStr(foelem),
+      it.Attributes.Resistances[itelem],
+      foe.Attributes.Resistances[foelem],
+      it.Attributes.Resistances[foelem],
+      foe.Attributes.Resistances[itelem],
+      itstats[0],
+      foestats[0],
+      itstats[1],
+      foestats[1],
+      itstats[2],
+      foestats[2],
     )
   } else {
+    elem, stats := funcs.ReStr(it.Basics.Streams)
     line = fmt.Sprintf(
-      "Element\n    %s|Resistance\n%0.3f|Creation\n%0.3f|Alteration\n%0.3f|Destruction\n%0.3f",
-      elemTotStr(it.Basics.Streams.Element),
-      it.Attributes.Resistances[it.Basics.Streams.Element],
-      it.Basics.Streams.Cre,
-      it.Basics.Streams.Alt,
-      it.Basics.Streams.Des,
+      "Element\n    %s|Resistance\n%.3f|Creation\n%.3f|Alteration\n%.3f|Destruction\n%.3f",
+      elemTotStr(elem),
+      it.Attributes.Resistances[elem],
+      stats[0],
+      stats[1],
+      stats[2],
     )
   }
   playerTuple = plot.AddRow(line,playerTuple)
   if compare {
     line = fmt.Sprintf(
-      " |Creation|  %+5.1f%% \n [%+5.1f%%]|  %+5.1f%% \n [%+5.1f%%]|  %+5.1f%% \n [%+5.1f%%]",
+      " |Creation|  %5.1f%% \n [%5.1f%%]|  %5.1f%% \n [%5.1f%%]|  %5.1f%% \n [%5.1f%%]",
       yourAbilities["Cad"]*100,
       foeAbilities["Cad"]*100,
       yourAbilities["Ca"]*100,
@@ -97,7 +105,7 @@ func PlayerStatus(players ...player.Player) {
     )
   } else {
     line = fmt.Sprintf(
-      " |Creation|%+5.1f%%|%+5.1f%%|%+5.1f%%",
+      " |Creation|%5.1f%%|%5.1f%%|%5.1f%%",
       yourAbilities["Cad"]*100,
       yourAbilities["Ca"]*100,
       yourAbilities["Cd"]*100,
@@ -106,7 +114,7 @@ func PlayerStatus(players ...player.Player) {
   playerTuple = plot.AddRow(line,playerTuple)
   if compare {
     line = fmt.Sprintf(
-      " |Alteration|  %+5.1f%% \n [%+5.1f%%]|  %+5.1f%% \n [%+5.1f%%]|  %+5.1f%% \n [%+5.1f%%]",
+      " |Alteration|  %5.1f%% \n [%5.1f%%]|  %5.1f%% \n [%5.1f%%]|  %5.1f%% \n [%5.1f%%]",
       yourAbilities["Ac"]*100,
       foeAbilities["Ac"]*100,
       yourAbilities["Acd"]*100,
@@ -116,7 +124,7 @@ func PlayerStatus(players ...player.Player) {
     )
   } else {
     line = fmt.Sprintf(
-      " |Alteration|%+5.1f%%|%+5.1f%%|%+5.1f%%",
+      " |Alteration|%5.1f%%|%5.1f%%|%5.1f%%",
       yourAbilities["Ac"]*100,
       yourAbilities["Acd"]*100,
       yourAbilities["Ad"]*100,
@@ -125,7 +133,7 @@ func PlayerStatus(players ...player.Player) {
   playerTuple = plot.AddRow(line,playerTuple)
   if compare {
     line = fmt.Sprintf(
-      " |Destruction|  %+5.1f%% \n [%+5.1f%%]|  %+5.1f%% \n [%+5.1f%%]|  %+5.1f%% \n [%+5.1f%%]",
+      " |Destruction|  %5.1f%% \n [%5.1f%%]|  %5.1f%% \n [%5.1f%%]|  %5.1f%% \n [%5.1f%%]",
       yourAbilities["Dc"]*100,
       foeAbilities["Dc"]*100,
       yourAbilities["Da"]*100,
@@ -135,7 +143,7 @@ func PlayerStatus(players ...player.Player) {
     )
   } else {
     line = fmt.Sprintf(
-      " |Creation|%+5.1f%%|%+5.1f%%|%+5.1f%%",
+      " |Creation|%5.1f%%|%5.1f%%|%5.1f%%",
       yourAbilities["Dc"]*100,
       yourAbilities["Da"]*100,
       yourAbilities["Dac"]*100,
