@@ -77,9 +77,9 @@ func init() {
     go func() { for { server.UpdPlayerStatE(StatChain, You) } }()
     client.PlayerStatus(You)
     player.FoeSpawn(&Target,0,&Frame.Foe)
-    client.PlayerStatus(You, Target)
+    client.PlayerStatus(Target)
   }
-  fmt.Println("\n\t     ",plot.Bar("Press [Enter] to continue",0),"\n")
+  fmt.Println("\t     ",plot.Bar("Press [Enter] to continue",0),"\n")
   fmt.Scanln()
 }
 
@@ -124,7 +124,7 @@ func main() {
       blockchain.ListBlocks(StatChain, playerID, false)
       time.Sleep( time.Millisecond * time.Duration( 2048 ))
     } else {
-      client.PlayerStatus(You, Target) ; plot.Frame(Frame)
+      client.PlayerStatus(You); client.PlayerStatus(Target) ; plot.Frame(Frame)
       time.Sleep( time.Millisecond * time.Duration( 128 ))
     }
   }

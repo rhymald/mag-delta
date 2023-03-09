@@ -21,7 +21,7 @@ type Player struct {
 type BasicStats struct {
   ID struct {
     NPC bool `json:"NPC"`
-    Name string `json:"Name,omitempty"`
+    Description string `json:"Name,omitempty"`
     Born int64 `json:"Born,omitempty"`
     Last int64 `json:"Last,omitempty"`
   } `json:"ID,omitempty"`
@@ -92,10 +92,12 @@ func CalculateAttributes_FromBasics(player *Player){
 func PlayerBorn(player *Player, mean float64, logger *string) string {
   buffer := Player{}
   buffer.Basics.ID.NPC = false
+  buffer.Basics.ID.Description = "Oh, that's me!"
   buffer.Basics.ID.Born = funcs.Epoch()
   buffer.Basics.ID.Last = buffer.Basics.ID.Born
   buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, funcs.Physical[1])
-  buffer.Basics.Streams = append(buffer.Basics.Streams, balance.BasicStats_Stream_FromNormaleWithElement(1+mean, funcs.Elements[0]))
+  strc, strmod := balance.BasicStats_StreamsCountAndModifier(buffer.Basics.ID.Born)
+  for i:=0; i<strc; i++ { buffer.Basics.Streams = append(buffer.Basics.Streams, balance.BasicStats_Stream_FromNormaleWithElement(strmod+mean, funcs.Elements[0])) }
   CalculateAttributes_FromBasics(&buffer)
   buffer.Status.Health = int(1000/math.Sqrt(buffer.Attributes.Vitality)) //from db
   *player = buffer
@@ -107,6 +109,7 @@ func PlayerBorn(player *Player, mean float64, logger *string) string {
 func FoeSpawn(foe *Player, mean float64, logger *string) { // old, new+ template Stream{}
   buffer := Player{}
   buffer.Basics.ID.NPC = true
+  buffer.Basics.ID.Description = "Training dummy, human-sized"
   buffer.Basics.ID.Born = funcs.Epoch()
   buffer.Basics.ID.Last = buffer.Basics.ID.Born
   buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, funcs.Physical[2])
