@@ -17,14 +17,14 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
   castId := fmt.Sprintf("%s#%3d", action.Kind, action.Time%1000)
   if *&caster.Attributes.Busy { plot.AddAction(logs, fmt.Sprintf("%s Fail: player is busy", castId)) ; return }
   if !(*&caster.Attributes.Login) || !(*&target.Attributes.Login) { plot.AddAction(logs, fmt.Sprintf("%s Fail: no player / no target", castId)) ; return }
-  dotsForConsume := balance.Cast_Common_DotsPerString(caster.Basics.Streams) //Cre
-  pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Basics.Streams) //Alt
-  reach := 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Basics.Streams) // Des
+  dotsForConsume := balance.Cast_Common_DotsPerString(caster.Basics.Streams[0]) //Cre
+  pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Basics.Streams[0]) //Alt
+  reach := 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Basics.Streams[0]) // Des
   damage := 0.0
   dotCounter := 0
   plot.AddAction(logs, fmt.Sprintf("%s:      start casting of %d dots ", castId, dotsForConsume))
   *&caster.Attributes.Busy = true
-  action.By = append(action.By, 0)
+  action.By = append(action.By, 0) // only 1 stream yet
   for i:=0; i<dotsForConsume; i++ {
     if len(*&caster.Status.Pool) == 0 { break }
     _, w, index := MinusDot(&(*&caster.Status.Pool))
@@ -49,7 +49,7 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
   } else {
     plot.AddAction(logs, fmt.Sprintf("%s From: %0.1f damage as %d sent for %.0f ms", castId, damage, dotsForConsume, pause*float64(dotsForConsume)))
     go func(){
-      elem, stats := funcs.ReStr(caster.Basics.Streams)
+      elem, stats := funcs.ReStr(caster.Basics.Streams[0])
       time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
       *&target.Status.Health += funcs.ChancedRound(-damage*((stats[2]+balance.Cast_Common_Equalator())/(target.Attributes.Resistances[elem]+balance.Cast_Common_Equalator()))*1000/target.Attributes.Vitality)
       plot.AddAction(logs, fmt.Sprintf("%s To:   %0.1f damage received after %.0f ms ", castId, damage*((stats[2]+balance.Cast_Common_Equalator())/(target.Attributes.Resistances[elem]+balance.Cast_Common_Equalator())), reach))

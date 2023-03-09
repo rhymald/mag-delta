@@ -75,7 +75,7 @@ func init() {
   if You.Basics.ID.Born != 0 {
     go func() { for { server.UpdPlayerStats(StatChain, You) } }()
     go func() { for { server.UpdPlayerStatE(StatChain, You) } }()
-    client.PlayerStatus(You, Target)
+    client.PlayerStatus(You)
     player.FoeSpawn(&Target,0,&Frame.Foe)
     client.PlayerStatus(You, Target)
   }
@@ -109,7 +109,7 @@ func main() {
       }
       if Target.Status.Health <= 0 { 
         player.PlayerEmpower(&You, 0, &Frame.Player) 
-        _, stats := funcs.ReStr(You.Basics.Streams)
+        _, stats := funcs.ReStr(You.Basics.Streams[0])
         player.FoeSpawn(&Target, (funcs.Vector(stats[0],stats[1],stats[2])/math.Sqrt(3)-1)+grow, &Frame.Foe)
       }
     }

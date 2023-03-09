@@ -18,7 +18,9 @@ func elemTotStr(e string) string {
 
 func PlayerStatus(players ...player.Player) {
   it, foe, compare := players[0], player.Player{}, len(players) > 1
-  if players[1].Status.Health <= 0 || players[0].Basics.ID.NPC { compare = false }
+  if len(players) == 1 {
+    compare = false
+  } else if players[1].Status.Health <= 0 || players[0].Basics.ID.NPC { compare = false }
   if compare { foe = players[1] }
   // health and mana bars
   fmt.Print("  Health ")
@@ -61,11 +63,12 @@ func PlayerStatus(players ...player.Player) {
     )
   }
   playerTuple = plot.AddRow(line,playerTuple)
-  yourAbilities := balance.StreamAbilities_FromStream(it.Basics.Streams)
-  foeAbilities := balance.StreamAbilities_FromStream(foe.Basics.Streams)
+  yourAbilities := balance.StreamAbilities_FromStream(it.Basics.Streams[0])
+  foeAbilities := make(map[string]float64)
+  if compare { foeAbilities = balance.StreamAbilities_FromStream(foe.Basics.Streams[0]) }
   if compare {
-    itelem, itstats := funcs.ReStr(it.Basics.Streams)
-    foelem, foestats := funcs.ReStr(foe.Basics.Streams)  
+    itelem, itstats := funcs.ReStr(it.Basics.Streams[0])
+    foelem, foestats := funcs.ReStr(foe.Basics.Streams[0])  
     line = fmt.Sprintf(
       "Energy \n    %s\n   [%s]|Affinity (Resist)\n %.3f vs [%.3f] \n[%.3f] vs %.3f|Creation\n   %.3f \n  [%.3f]|Alteration\n   %.3f \n  [%.3f]|Destruction\n   %.3f \n  [%.3f]",
       elemTotStr(itelem),
@@ -82,7 +85,7 @@ func PlayerStatus(players ...player.Player) {
       foestats[2],
     )
   } else {
-    elem, stats := funcs.ReStr(it.Basics.Streams)
+    elem, stats := funcs.ReStr(it.Basics.Streams[0])
     line = fmt.Sprintf(
       "Element\n    %s|Affinity (Resist)\n%.3f|Creation\n%.3f|Alteration\n%.3f|Destruction\n%.3f",
       elemTotStr(elem),

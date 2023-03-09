@@ -26,7 +26,7 @@ type BasicStats struct {
     Last int64 `json:"Last,omitempty"`
   } `json:"ID,omitempty"`
   Body funcs.Stream `json:"Body"`
-  Streams funcs.Stream `json:"Streams"`
+  Streams []funcs.Stream `json:"Streams,omitempty"`
   Items []funcs.Stream `json:"Items,omitempty"`
 } // ^ stored in stats/spawn chains
 type CharStatus struct { // +heats +exp +consumables
@@ -58,7 +58,7 @@ func Live(player *Player, logger *string) {
   if player.Basics.ID.NPC {
     go func(){ Negeneration(&(*&player.Status.Health), &(*&player.Attributes.Login), *&player.Attributes.Vitality, *&player.Attributes.Poolsize, *&player.Basics.Body, logger) }()
   } else {
-    go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), &(*&player.Attributes.Login), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body, logger) }()
+    go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), &(*&player.Attributes.Login), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams[0], *&player.Basics.Body, logger) }()
   }
   // + start calm
   // + start stamina
@@ -82,10 +82,10 @@ func CalculateAttributes_FromBasics(player *Player){
   buffer.Attributes.Login = false
   buffer.Attributes.Vitality = balance.BasicStats_MaxHP_FromBody(buffer.Basics.Body) // from db
   resists := make(map[string]float64)
-  elem, _ := funcs.ReStr(buffer.Basics.Streams)
-  if elem != funcs.Elements[0] { resists[elem] = balance.BasicStats_Resistance_FromStream(buffer.Basics.Streams) } 
+  elem, _ := funcs.ReStr(buffer.Basics.Streams[0])
+  if elem != funcs.Elements[0] { resists[elem] = balance.BasicStats_Resistance_FromStream(buffer.Basics.Streams[0]) } 
   buffer.Attributes.Resistances = resists
-  buffer.Attributes.Poolsize = balance.BasicStats_MaxPool_FromStream(buffer.Basics.Streams)
+  buffer.Attributes.Poolsize = balance.BasicStats_MaxPool_FromStream(buffer.Basics.Streams[0])
   *player = buffer
 }
 
@@ -95,7 +95,7 @@ func PlayerBorn(player *Player, mean float64, logger *string) string {
   buffer.Basics.ID.Born = funcs.Epoch()
   buffer.Basics.ID.Last = buffer.Basics.ID.Born
   buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, funcs.Physical[1])
-  buffer.Basics.Streams = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, funcs.Elements[0])
+  buffer.Basics.Streams = append(buffer.Basics.Streams, balance.BasicStats_Stream_FromNormaleWithElement(1+mean, funcs.Elements[0]))
   CalculateAttributes_FromBasics(&buffer)
   buffer.Status.Health = int(1000/math.Sqrt(buffer.Attributes.Vitality)) //from db
   *player = buffer
@@ -110,7 +110,7 @@ func FoeSpawn(foe *Player, mean float64, logger *string) { // old, new+ template
   buffer.Basics.ID.Born = funcs.Epoch()
   buffer.Basics.ID.Last = buffer.Basics.ID.Born
   buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, funcs.Physical[2])
-  buffer.Basics.Streams = balance.BasicStats_Stream_FromNormaleWithElement(1+mean, funcs.Elements[0])
+  buffer.Basics.Streams = append(buffer.Basics.Streams, balance.BasicStats_Stream_FromNormaleWithElement(1+mean, funcs.Elements[0]))
   CalculateAttributes_FromBasics(&buffer)
   buffer.Status.Health = 618
   *foe = buffer

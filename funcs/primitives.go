@@ -10,7 +10,7 @@ import (
 )
 
 var Elements [9]string = [9]string{"◌ ", "🌪 ", "🔥", "🪨", "🧊", "🌑", "🩸", "🎶", "☀️ "} 
-var Physical [5]string = [5]string{"◌ ", "🌱",  "🪵", "🪨", "🛡 "} // none, flesh/plant, wood/shell, stone, armored
+var Physical [5]string = [5]string{"◌ ", "🌱",  "🪵", "🪨", "🛡 "} // none, flesh/plant (punchD), wood/shell (stingA), stone (chopDa), armored
 
 type Dot map[string]int 
 type Stream map[string][3]int
