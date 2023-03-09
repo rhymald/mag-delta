@@ -12,7 +12,7 @@ func BasicStats_Resistance_FromStream(str funcs.Stream) float64 { _, stats := Re
 func BasicStats_MaxPool_FromStream(str funcs.Stream) float64 { _, stats := ReStr(str) ; return math.Sqrt(funcs.Vector(stats[0],stats[1],stats[2]))*32 }
 func BasicStats_Stream_FromNormaleWithElement(norm float64, element string) funcs.Stream {
   norm *= math.Sqrt(3)
-  cre, alt, des := 5+funcs.Rand()+funcs.Rand(), 5+funcs.Rand()+funcs.Rand(), 5+funcs.Rand()+funcs.Rand()
+  cre, alt, des := funcs.ChancedRand(4), funcs.ChancedRand(4), funcs.ChancedRand(4)
   stabilizer := norm/funcs.Vector(cre,alt,des)
   cre, alt, des = cre*stabilizer, alt*stabilizer, des*stabilizer
   return funcs.Stream{ element : [3]int{ funcs.FloorRound(cre*1000), funcs.FloorRound(alt*1000), funcs.FloorRound(des*1000) }}
@@ -27,7 +27,7 @@ func Regeneration_DotWeight_FromStream(stream funcs.Stream) funcs.Dot {
   return map[string]int{ elem : funcs.ChancedRound(w*(funcs.Rand()*0.2+0.9)) }
 }
 
-// Here!
+func Cast_Common_Equalator() float64 { return math.Pi }
 func Cast_Common_Failed(need int, got int) bool { return funcs.Rand() >= math.Sqrt(float64(got)/float64(need)) }
 func Cast_Common_TimePerString(str funcs.Stream) float64 { _, stats := ReStr(str) ; return Regeneration_DefaultTimeout()/math.Log2(stats[1]+1) }
 func Cast_Common_ExecutionRapidity(str funcs.Stream) float64 { _, stats := ReStr(str) ; return math.Log10(stats[2]+10) }

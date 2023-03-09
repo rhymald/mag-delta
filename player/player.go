@@ -83,7 +83,7 @@ func CalculateAttributes_FromBasics(player *Player){
   buffer.Attributes.Vitality = balance.BasicStats_MaxHP_FromBody(buffer.Basics.Body) // from db
   resists := make(map[string]float64)
   elem, _ := funcs.ReStr(buffer.Basics.Streams)
-  resists[elem] = balance.BasicStats_Resistance_FromStream(buffer.Basics.Streams)
+  if elem != funcs.Elements[0] { resists[elem] = balance.BasicStats_Resistance_FromStream(buffer.Basics.Streams) } 
   buffer.Attributes.Resistances = resists
   buffer.Attributes.Poolsize = balance.BasicStats_MaxPool_FromStream(buffer.Basics.Streams)
   *player = buffer

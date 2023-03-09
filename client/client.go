@@ -67,13 +67,13 @@ func PlayerStatus(players ...player.Player) {
     itelem, itstats := funcs.ReStr(it.Basics.Streams)
     foelem, foestats := funcs.ReStr(foe.Basics.Streams)  
     line = fmt.Sprintf(
-      "Energy \n    %s\n   [%s]|Resistance\n %.3f  [%.3f] \n[%.3f]  %.3f|Creation\n   %.3f \n  [%.3f]|Alteration\n   %.3f \n  [%.3f]|Destruction\n   %.3f \n  [%.3f]",
+      "Energy \n    %s\n   [%s]|Affinity (Resist)\n %.3f vs [%.3f] \n[%.3f] vs %.3f|Creation\n   %.3f \n  [%.3f]|Alteration\n   %.3f \n  [%.3f]|Destruction\n   %.3f \n  [%.3f]",
       elemTotStr(itelem),
       elemTotStr(foelem),
-      it.Attributes.Resistances[itelem],
-      foe.Attributes.Resistances[foelem],
-      it.Attributes.Resistances[foelem],
-      foe.Attributes.Resistances[itelem],
+      it.Attributes.Resistances[itelem]+balance.Cast_Common_Equalator(),
+      it.Attributes.Resistances[foelem]+balance.Cast_Common_Equalator(),
+      foe.Attributes.Resistances[foelem]+balance.Cast_Common_Equalator(),
+      foe.Attributes.Resistances[itelem]+balance.Cast_Common_Equalator(),
       itstats[0],
       foestats[0],
       itstats[1],
@@ -84,9 +84,9 @@ func PlayerStatus(players ...player.Player) {
   } else {
     elem, stats := funcs.ReStr(it.Basics.Streams)
     line = fmt.Sprintf(
-      "Element\n    %s|Resistance\n%.3f|Creation\n%.3f|Alteration\n%.3f|Destruction\n%.3f",
+      "Element\n    %s|Affinity (Resist)\n%.3f|Creation\n%.3f|Alteration\n%.3f|Destruction\n%.3f",
       elemTotStr(elem),
-      it.Attributes.Resistances[elem],
+      it.Attributes.Resistances[elem]+it.Attributes.Resistances[funcs.Elements[0]],
       stats[0],
       stats[1],
       stats[2],
