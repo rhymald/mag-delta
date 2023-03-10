@@ -43,6 +43,8 @@ func PlayerStatus(player player.Player) {
   )
   playerTuple = plot.AddRow(line,playerTuple)
   plot.Table(playerTuple, false) ; line, playerTuple = "", [][]string{}
+  fmt.Print("    Resistances:")
+  for el, resist := range player.Attributes.Resistances { if resist != 0 { fmt.Printf("    %s: %.3f", el, resist) } } ; fmt.Println()
   line = "Element|Create|Alterate|Destroy|Ca|Cd|Cad|Ac|Ad|Acd|Dc|Da|Dca"
   playerTuple = plot.AddRow(line,playerTuple)
   for index, every := range player.Basics.Streams {
@@ -50,7 +52,7 @@ func PlayerStatus(player player.Player) {
     elem, stats = funcs.ReStr(every)
     line = fmt.Sprintf(
       "%d'%s|%.0f|%.0f|%.0f",
-      index, elemTotStr(elem),
+      index+1, elemTotStr(elem),
       stats[0]*1000,
       stats[1]*1000,
       stats[2]*1000,

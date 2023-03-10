@@ -81,11 +81,15 @@ func CalculateAttributes_FromBasics(player *Player){
   buffer := *player
   buffer.Attributes.Login = false
   buffer.Attributes.Vitality = balance.BasicStats_MaxHP_FromBody(buffer.Basics.Body) // from db
-  resists := make(map[string]float64)
-  elem, _ := funcs.ReStr(buffer.Basics.Streams[0])
-  if elem != funcs.Elements[0] { resists[elem] = balance.BasicStats_Resistance_FromStream(buffer.Basics.Streams[0]) } 
+  resists, pool := make(map[string]float64), 0.0
+  for _, each := range buffer.Basics.Streams {
+    elem, _ := funcs.ReStr(each)
+    if elem != funcs.Elements[0] { resists[elem] += balance.BasicStats_Resistance_FromStream(each) } 
+    resists[funcs.Elements[0]] += 1
+    pool += balance.BasicStats_MaxPool_FromStream(each)
+  }
   buffer.Attributes.Resistances = resists
-  buffer.Attributes.Poolsize = balance.BasicStats_MaxPool_FromStream(buffer.Basics.Streams[0])
+  buffer.Attributes.Poolsize = pool
   *player = buffer
 }
 
@@ -96,8 +100,8 @@ func PlayerBorn(player *Player, mean float64, logger *string) string {
   buffer.Basics.ID.Born = funcs.Epoch()
   buffer.Basics.ID.Last = buffer.Basics.ID.Born
   buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, funcs.Physical[1])
-  strc, strmod := balance.BasicStats_StreamsCountAndModifier(buffer.Basics.ID.Born)
-  for i:=0; i<strc; i++ { buffer.Basics.Streams = append(buffer.Basics.Streams, balance.BasicStats_Stream_FromNormaleWithElement(strmod+mean, funcs.Elements[0])) }
+  strc := balance.BasicStats_StreamsCountAndModifier(buffer.Basics.ID.Born)
+  for i:=0; i<strc; i++ { buffer.Basics.Streams = append(buffer.Basics.Streams, balance.BasicStats_Stream_FromNormaleWithElement(mean + 1/float64(strc), funcs.Elements[0])) }
   CalculateAttributes_FromBasics(&buffer)
   buffer.Status.Health = int(1000/math.Sqrt(buffer.Attributes.Vitality)) //from db
   *player = buffer

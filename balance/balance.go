@@ -7,7 +7,7 @@ import (
 
 func ReStr(stream funcs.Stream) (string, [3]float64) { return funcs.ReStr(stream) } 
 
-func BasicStats_StreamsCountAndModifier(b int64) (int, float64) { a := int(b%4)+2 ; return a, 3.5/float64(a) }
+func BasicStats_StreamsCountAndModifier(in int64) int { if in%10 == 9 {return 5} ; if in%10 == 0 {return 2} ; if in%10 > 4 {return 4} else {return 3} ; return 0 }
 func BasicStats_MaxHP_FromBody(body funcs.Stream) float64 { _, stats := ReStr(body) ; return (math.Pi/(1/stats[0]+1/stats[1]+1/stats[2]))*64+16 }
 func BasicStats_Resistance_FromStream(str funcs.Stream) float64 { _, stats := ReStr(str) ; return math.Pi/(1/stats[0]+1/stats[1]+1/stats[2]) }
 func BasicStats_MaxPool_FromStream(str funcs.Stream) float64 { _, stats := ReStr(str) ; return math.Sqrt(funcs.Vector(stats[0],stats[1],stats[2]))*32 }
@@ -28,7 +28,6 @@ func Regeneration_DotWeight_FromStream(stream funcs.Stream) funcs.Dot {
   return map[string]int{ elem : funcs.ChancedRound(w*(funcs.Rand()*0.2+0.9)) }
 }
 
-func Cast_Common_Equalator() float64 { return math.Pi }
 func Cast_Common_Failed(need int, got int) bool { return funcs.Rand() >= math.Sqrt(float64(got)/float64(need)) }
 func Cast_Common_TimePerString(str funcs.Stream) float64 { _, stats := ReStr(str) ; return Regeneration_DefaultTimeout()/math.Log2(stats[1]+1) }
 func Cast_Common_ExecutionRapidity(str funcs.Stream) float64 { _, stats := ReStr(str) ; return math.Log10(stats[2]+10) }
@@ -39,7 +38,7 @@ func StreamStructure3(a float64, b float64, c float64, t float64) bool { if ( St
 func StreamAffinity2(a float64, b float64, t float64) float64 { return math.Pow(math.Log2(t/(a/b))/math.Log2(t), 2) }
 func StreamAffinity3(a float64, b float64, c float64, t float64) float64 { ab, ca := math.Max(a,b)/math.Min(a,b), math.Max(a,c)/math.Min(a,c) ; return math.Pow(math.Log2(t/(2/(1/ab+1/ca)))/math.Log2(t), 2)}
 func StreamAbilities_FromStream(str funcs.Stream) map[string]float64 {
-  rate := 1.1 // resonating coefficient: bigger = more effect, - must be >1
+  rate := math.Phi // resonating coefficient: bigger = more effect, - must be >1
   buffer := make(map[string]float64)
   _, stats := ReStr(str) 
   // Antibarrier (enchantment, poisoned weapon) = +AddDamage, +ticks, - if D>C close to each other

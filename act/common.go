@@ -48,11 +48,12 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
     plot.AddAction(logs, fmt.Sprintf("%s Fail: cast of %d/%d dots failed ", castId, dotCounter, dotsForConsume)) ; return
   } else {
     plot.AddAction(logs, fmt.Sprintf("%s From: %0.1f damage as %d sent for %.0f ms", castId, damage, dotsForConsume, pause*float64(dotsForConsume)))
+    // calculate effectiveness here
     go func(){
       elem, stats := funcs.ReStr(caster.Basics.Streams[0])
       time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
-      *&target.Status.Health += funcs.ChancedRound(-damage*((stats[2]+balance.Cast_Common_Equalator())/(target.Attributes.Resistances[elem]+balance.Cast_Common_Equalator()))*1000/target.Attributes.Vitality)
-      plot.AddAction(logs, fmt.Sprintf("%s To:   %0.1f damage received after %.0f ms ", castId, damage*((stats[2]+balance.Cast_Common_Equalator())/(target.Attributes.Resistances[elem]+balance.Cast_Common_Equalator())), reach))
+      *&target.Status.Health += funcs.ChancedRound( -damage * (stats[2]+caster.Attributes.Resistances[funcs.Elements[0]]) / (target.Attributes.Resistances[elem]+target.Attributes.Resistances[funcs.Elements[0]]) * 1000/target.Attributes.Vitality)
+      plot.AddAction(logs, fmt.Sprintf("%s To:   %0.1f damage received after %.0f ms ", castId, damage*((stats[2]+caster.Attributes.Resistances[funcs.Elements[0]])/(target.Attributes.Resistances[elem]+target.Attributes.Resistances[funcs.Elements[0]])), reach))
       if *&target.Status.Health < 0 { *&target.Status.Health = 0 }
       // +exp?
     }()

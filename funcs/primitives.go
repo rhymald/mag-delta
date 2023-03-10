@@ -9,7 +9,7 @@ import (
   _ "encoding/json"
 )
 
-var Elements [9]string = [9]string{"◌ ", "🌪 ", "🔥", "🪨", "🧊", "🌑", "🩸", "🎶", "☀️ "} 
+var Elements [9]string = [9]string{"◌ ", "🌪 ", "🔥"}//, "🪨", "🧊", "🌑", "🩸", "🎶", "☀️ "} 
 var Physical [5]string = [5]string{"◌ ", "🌱",  "🪵", "🪨", "🛡 "} // none, flesh/plant (punchD), wood/shell (stingA), stone (chopDa), armored
 
 type Dot map[string]int 
