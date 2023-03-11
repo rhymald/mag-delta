@@ -32,9 +32,19 @@ var (
 )
 
 func debug() {
+  // player fetch
+  var ad player.Player 
+  var bc player.Player 
+  _, _ = player.PlayerBorn(&ad, 1, &Frame.Player) , player.PlayerBorn(&bc, 2, &Frame.Player)
+  fmt.Println(player.Fetch_Stats(bc.Basics,ad.Basics))
+  bc.Basics.ID.Born = ad.Basics.ID.Born
+  fmt.Println(player.Fetch_Stats(bc.Basics,ad.Basics))
+  // picker
   fmt.Print(funcs.PickXFrom(17, 39)); fmt.Print(funcs.PickXFrom(4, 9)); fmt.Print(funcs.PickXFrom(17, 3)) ; fmt.Println(funcs.PickXFrom(4, 6))
+  // list all elements
   for x:=0 ;x<len(funcs.Physical); x++ { fmt.Printf(" x[%s]%.3f ", funcs.Physical[x], math.Pow(math.Log2(float64(x)+1), 2) ) } ; fmt.Println()
   for x:=0 ;x<3; x++ { fmt.Printf(" ^[%s]%.3f ", funcs.Elements[x], math.Pow(math.Sqrt(math.Log2(float64(x)+2))-1, 2)+1 ) } ; fmt.Println()
+  // streams count randomizer
   a,b,c,d,e := 0,0,0,0,0
   for x:=int64(0); x<1000; x++ { 
     aaa := balance.BasicStats_StreamsCountAndModifier(funcs.Epoch())
@@ -114,7 +124,7 @@ func main() {
       Action, _ := <-Keys
       switch Action {
       case "e":
-          go func(){ act.Jinx(&You, &Target, &Frame) }()
+          go func(){ act.Fractal_Jinx(&You, &Target, &Frame) }()
           Action = " "
         default:
       }

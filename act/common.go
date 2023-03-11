@@ -12,42 +12,41 @@ import (
 )
 
 // +Punch(Da) +Sting(Ad) +Block(C) - [physicals]
-func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
+func Fractal_Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
   action := funcs.Action{ Time: (funcs.Epoch()/1000000) , Kind: "Jinx" }
+  element := funcs.Elements[0]
   castId := fmt.Sprintf("%s#%3d", action.Kind, action.Time%1000)
   if *&caster.Attributes.Busy { plot.AddAction(logs, fmt.Sprintf("%s Fail: player is busy", castId)) ; return }
   if !(*&caster.Attributes.Login) || !(*&target.Attributes.Login) { plot.AddAction(logs, fmt.Sprintf("%s Fail: no player / no target", castId)) ; return }
-
+  // PREPARE FOR CAST - can be universal separate func
   minstreams := balance.BasicStats_StreamsCountAndModifier(caster.Basics.ID.Born) 
   picked := funcs.PickXFrom(minstreams, len(caster.Basics.Streams))
-  reach := 0.0 // Des
-  totalDotsNeeded := 0
-  damage := 0.0
-  dotCounter := 0
-  totalpause := 0.0
-  
+  reach, damage, totalpause, empower := 0.0, 0.0, 0.0, 0.0 
+  dotCounter, totalDotsNeeded := 0, 0
+  // dots CONSUMPTION and counting
   *&caster.Attributes.Busy = true
   for _, each := range picked {
+    _, stats := funcs.ReStr(caster.Basics.Streams[each])
     dotsForConsume := balance.Cast_Common_DotsPerString(caster.Basics.Streams[each], minstreams) //Cre
-    reach += 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Basics.Streams[each]) / float64(minstreams) // Des
-    totalDotsNeeded += dotsForConsume
-    pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Basics.Streams[each]) // alt
-    totalpause += pause * float64(dotsForConsume)
-    plot.AddAction(logs, fmt.Sprintf("%s:      stream #%d demands %d dots ", castId, each, dotsForConsume))
-    action.By = append(action.By, 0) // only 1 stream yet
+    reach += 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Basics.Streams[each]) / float64(minstreams) // Des; effectiveness accumulation: for stats
+    totalDotsNeeded += dotsForConsume // effectiveness accumulation: for cast success chance
+    pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Basics.Streams[each]) // Alt
+    totalpause += pause * float64(dotsForConsume) // effectiveness accumulation: for stats
+    plot.AddAction(logs, fmt.Sprintf("%s Burn: stream #%d demands %d dots ", castId, each, dotsForConsume))
+    action.By = append(action.By, each) 
     for i:=0; i<dotsForConsume; i++ {
       if len(*&caster.Status.Pool) == 0 { break }
       _, w, index := MinusDot(&(*&caster.Status.Pool))
-      damage += float64(w)
-      dotCounter++
+      empower += stats[2]
+      damage += float64(w) // effectiveness accumulation: for final effect
+      dotCounter++ // effectiveness accumulation: for cast success chance
       action.With = append(action.With, index)
       time.Sleep( time.Millisecond * time.Duration( pause ))
     }
   }
+  empower = empower / float64(dotCounter) + caster.Attributes.Resistances[funcs.Elements[0]]
   *&caster.Attributes.Busy = false
-
-  // actions logging for anticheat? 
-  // TBRefactored for less duplication
+  // ACTION LOG for anticheat? need refactor for less duplication
   affection := action
   cpid, csid := player.GetID(*caster)
   tpid, tsid := player.GetID(*target)
@@ -55,17 +54,17 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
   affection.To = action.From ; affection.From = action.To
   *&caster.Status.ActionLog = append(*&caster.Status.ActionLog, action)
   *&target.Status.ActionLog = append(*&target.Status.ActionLog, affection)
-  // maybe move it to spawnchain, friendly fire and self leave in playchain
+  // ^ maybe move it to spawnchain, friendly fire and self leave in playchain
+  // EFFECT EXECUTION
   if balance.Cast_Common_Failed(totalDotsNeeded, dotCounter) {
     plot.AddAction(logs, fmt.Sprintf("%s Fail: cast of %d/%d dots failed ", castId, dotCounter, totalDotsNeeded)) ; return
   } else {
-    plot.AddAction(logs, fmt.Sprintf("%s From: %0.1f damage as %d sent for %.0f ms", castId, damage, totalDotsNeeded, totalpause))
+    plot.AddAction(logs, fmt.Sprintf("%s Cast: %0.1f damage as %d sent for %.0f ms", castId, damage, totalDotsNeeded, totalpause))
     // calculate effectiveness here
     go func(){
-      elem, stats := funcs.ReStr(caster.Basics.Streams[0])
       time.Sleep( time.Millisecond * time.Duration( reach )) // immitation
-      *&target.Status.Health += funcs.ChancedRound( -damage * (stats[2]+caster.Attributes.Resistances[funcs.Elements[0]]) / (target.Attributes.Resistances[elem]+target.Attributes.Resistances[funcs.Elements[0]]) * 1000/target.Attributes.Vitality)
-      plot.AddAction(logs, fmt.Sprintf("%s To:   %0.1f damage received after %.0f ms ", castId, damage*((stats[2]+caster.Attributes.Resistances[funcs.Elements[0]])/(target.Attributes.Resistances[elem]+target.Attributes.Resistances[funcs.Elements[0]])), reach))
+      *&target.Status.Health += funcs.ChancedRound( -damage * empower / (target.Attributes.Resistances[element]+target.Attributes.Resistances[funcs.Elements[0]]) * 1000/target.Attributes.Vitality)
+      plot.AddAction(logs, fmt.Sprintf("%s Take: %0.1f damage received after %.0f ms ", castId, damage*(empower/(target.Attributes.Resistances[element]+target.Attributes.Resistances[funcs.Elements[0]])), reach))
       if *&target.Status.Health < 0 { *&target.Status.Health = 0 }
       // +exp?
     }()

@@ -14,11 +14,12 @@ type LogFrame struct {
 func CleanFrame() LogFrame {
   buffer := LogFrame{}
   buffer.Player = ""
-  buffer.Size = 13
+  buffer.Size = 10
   buffer.Actions = append(buffer.Actions," ")
   buffer.Actions = append(buffer.Actions,"Welcome!")
   buffer.Actions = append(buffer.Actions,"Here you can find a list of actions you have made.")
-  buffer.Actions = append(buffer.Actions,"Just press [E] key to attack the dummy,")
+  buffer.Actions = append(buffer.Actions,"Just press key to attack the dummy with: ")
+  buffer.Actions = append(buffer.Actions,"           [E] Jinx - simple dots releasing fractal,")
   buffer.Actions = append(buffer.Actions,"     Press [?] key to get the chain tree,")
   buffer.Actions = append(buffer.Actions,"        Or [/] key to get the list of players.")
   buffer.Actions = append(buffer.Actions," ")
@@ -43,9 +44,8 @@ func Frame(frame LogFrame){
 }
 
 func AddAction(frame *LogFrame, action string){
-  *&frame.Actions = append(*&frame.Actions, action)
-  if len(*&frame.Actions) > *&frame.Size {
-    buffer := *&frame.Actions
-    *&frame.Actions = buffer[(len(*&frame.Actions)-*&frame.Size):*&frame.Size]
+  if len(*&frame.Actions) >= *&frame.Size {
+    *&frame.Actions = frame.Actions[(len(*&frame.Actions)-*&frame.Size):*&frame.Size]
   }
+  *&frame.Actions = append(*&frame.Actions, action)
 }
