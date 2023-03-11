@@ -17,24 +17,35 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
   castId := fmt.Sprintf("%s#%3d", action.Kind, action.Time%1000)
   if *&caster.Attributes.Busy { plot.AddAction(logs, fmt.Sprintf("%s Fail: player is busy", castId)) ; return }
   if !(*&caster.Attributes.Login) || !(*&target.Attributes.Login) { plot.AddAction(logs, fmt.Sprintf("%s Fail: no player / no target", castId)) ; return }
+
   minstreams := balance.BasicStats_StreamsCountAndModifier(caster.Basics.ID.Born) 
-  dotsForConsume := balance.Cast_Common_DotsPerString(caster.Basics.Streams[0], minstreams) //Cre
-  pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Basics.Streams[0]) //Alt
-  reach := 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Basics.Streams[0]) // Des
+  picked := funcs.PickXFrom(minstreams, len(caster.Basics.Streams))
+  reach := 0.0 // Des
+  totalDotsNeeded := 0
   damage := 0.0
   dotCounter := 0
-  plot.AddAction(logs, fmt.Sprintf("%s:      start casting of %d dots ", castId, dotsForConsume))
+  totalpause := 0.0
+  
   *&caster.Attributes.Busy = true
-  action.By = append(action.By, 0) // only 1 stream yet
-  for i:=0; i<dotsForConsume; i++ {
-    if len(*&caster.Status.Pool) == 0 { break }
-    _, w, index := MinusDot(&(*&caster.Status.Pool))
-    damage += float64(w)
-    dotCounter++
-    action.With = append(action.With, index)
-    time.Sleep( time.Millisecond * time.Duration( pause ))
+  for _, each := range picked {
+    dotsForConsume := balance.Cast_Common_DotsPerString(caster.Basics.Streams[each], minstreams) //Cre
+    reach += 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Basics.Streams[each]) / float64(minstreams) // Des
+    totalDotsNeeded += dotsForConsume
+    pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Basics.Streams[each]) // alt
+    totalpause += pause * float64(dotsForConsume)
+    plot.AddAction(logs, fmt.Sprintf("%s:      stream #%d demands %d dots ", castId, each, dotsForConsume))
+    action.By = append(action.By, 0) // only 1 stream yet
+    for i:=0; i<dotsForConsume; i++ {
+      if len(*&caster.Status.Pool) == 0 { break }
+      _, w, index := MinusDot(&(*&caster.Status.Pool))
+      damage += float64(w)
+      dotCounter++
+      action.With = append(action.With, index)
+      time.Sleep( time.Millisecond * time.Duration( pause ))
+    }
   }
   *&caster.Attributes.Busy = false
+
   // actions logging for anticheat? 
   // TBRefactored for less duplication
   affection := action
@@ -45,10 +56,10 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
   *&caster.Status.ActionLog = append(*&caster.Status.ActionLog, action)
   *&target.Status.ActionLog = append(*&target.Status.ActionLog, affection)
   // maybe move it to spawnchain, friendly fire and self leave in playchain
-  if balance.Cast_Common_Failed(dotsForConsume,dotCounter) {
-    plot.AddAction(logs, fmt.Sprintf("%s Fail: cast of %d/%d dots failed ", castId, dotCounter, dotsForConsume)) ; return
+  if balance.Cast_Common_Failed(totalDotsNeeded, dotCounter) {
+    plot.AddAction(logs, fmt.Sprintf("%s Fail: cast of %d/%d dots failed ", castId, dotCounter, totalDotsNeeded)) ; return
   } else {
-    plot.AddAction(logs, fmt.Sprintf("%s From: %0.1f damage as %d sent for %.0f ms", castId, damage, dotsForConsume, pause*float64(dotsForConsume)))
+    plot.AddAction(logs, fmt.Sprintf("%s From: %0.1f damage as %d sent for %.0f ms", castId, damage, totalDotsNeeded, totalpause))
     // calculate effectiveness here
     go func(){
       elem, stats := funcs.ReStr(caster.Basics.Streams[0])

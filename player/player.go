@@ -55,7 +55,7 @@ func PlayerEmpower(player *Player, mean float64, logger *string){ // immitation
 
 func Live(player *Player, logger *string) {
   *&player.Attributes.Login = true
-  go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), &(*&player.Attributes.Login), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams[0], *&player.Basics.Body, *&player.Basics.ID.NPC, logger) }()
+  go func(){ Regeneration(&(*&player.Status.Pool), &(*&player.Status.Health), &(*&player.Attributes.Login), *&player.Attributes.Poolsize, *&player.Attributes.Vitality, *&player.Basics.Streams, *&player.Basics.Body, *&player.Basics.ID.NPC, logger) }()
   // + start calm
   // + start stamina
 }
@@ -120,7 +120,7 @@ func FoeSpawn(foe *Player, mean float64, logger *string) { // old, new+ template
   Live(foe, logger)
 }
 
-func Regeneration(pool *[]funcs.Dot, health *int, alive *bool, max float64, vitality float64, stream funcs.Stream, body funcs.Stream, npc bool, logger *string) {
+func Regeneration(pool *[]funcs.Dot, health *int, alive *bool, max float64, vitality float64, streams []funcs.Stream, body funcs.Stream, npc bool, logger *string) {
   for {
     if *alive != true { *logger = fmt.Sprintf("Not logged in yet. Stop Regeneration") ; break }
     trigger := max-float64(len(*pool))<1
@@ -129,8 +129,9 @@ func Regeneration(pool *[]funcs.Dot, health *int, alive *bool, max float64, vita
       time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) 
       *logger = fmt.Sprintf("Energy full, regeneration paused. ")
     } else {
-      elem, _ := funcs.ReStr(stream)
-      dot := balance.Regeneration_DotWeight_FromStream(stream)
+      pick := funcs.PickXFrom(1, len(streams))
+      elem, _ := funcs.ReStr(streams[pick[0]])
+      dot := balance.Regeneration_DotWeight_FromStream(streams[pick[0]])
       // if npc { dot = balance.Regeneration_DotWeight_FromStream(body) }
       // hpause := balance.Regeneration_TimeoutMilliseconds_FromWeightPool(dot[elem], float64(len(*pool)), max)
       curen := float64(len(*pool)) ; if npc { curen = max/2 }
