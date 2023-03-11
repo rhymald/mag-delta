@@ -17,7 +17,8 @@ func Jinx(caster *player.Player, target *player.Player, logs *plot.LogFrame) {
   castId := fmt.Sprintf("%s#%3d", action.Kind, action.Time%1000)
   if *&caster.Attributes.Busy { plot.AddAction(logs, fmt.Sprintf("%s Fail: player is busy", castId)) ; return }
   if !(*&caster.Attributes.Login) || !(*&target.Attributes.Login) { plot.AddAction(logs, fmt.Sprintf("%s Fail: no player / no target", castId)) ; return }
-  dotsForConsume := balance.Cast_Common_DotsPerString(caster.Basics.Streams[0]) //Cre
+  minstreams := balance.BasicStats_StreamsCountAndModifier(caster.Basics.ID.Born) 
+  dotsForConsume := balance.Cast_Common_DotsPerString(caster.Basics.Streams[0], minstreams) //Cre
   pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Basics.Streams[0]) //Alt
   reach := 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Basics.Streams[0]) // Des
   damage := 0.0
@@ -65,10 +66,7 @@ func MinusDot(pool *[]funcs.Dot) (string, int, int) {
   index := rand.New(rand.NewSource(time.Now().UnixNano())).Intn( len(*pool) )
   buffer := *pool
   ddelement, ddweight := "", 0 
-  for elem, weig := range buffer[index] {
-    ddelement = elem
-    ddweight = weig
-  }
+  for elem, weig := range buffer[index] { ddelement = elem ; ddweight = weig }
   buffer[index] = buffer[len(buffer)-1]
   *pool = buffer[:len(buffer)-1]
   return ddelement, ddweight, index

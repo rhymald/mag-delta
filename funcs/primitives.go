@@ -15,6 +15,22 @@ var Physical [5]string = [5]string{"◌ ", "🌱",  "🪵", "🪨", "🛡 "} // 
 type Dot map[string]int 
 type Stream map[string][3]int
 
+func PickXFrom(x int, total int) []int {
+  var buffer []int
+  if total <= x {
+    for i:=0; i<total; i++ { buffer=append(buffer, i) }
+  } else {
+    for {
+      picker := rand.New(rand.NewSource(time.Now().UnixNano())).Intn(x)
+      present := false
+      for _, each := range buffer { if picker == each { present = true } }
+      if !present { buffer = append(buffer, picker)}
+      if len(buffer)==x {break}
+    }
+  }
+  return buffer
+}
+
 func ReStr(stream Stream) (string, [3]float64) {
   for e, stats := range stream { return e, [3]float64{ float64(stats[0])/1000, float64(stats[1])/1000, float64(stats[2])/1000 } } 
   return "ERROR", [3]float64{0,0,0} 

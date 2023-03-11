@@ -27,10 +27,10 @@ func PlayerStatus(player player.Player) {
   line, playerTuple := "", [][]string{}
   attrs := []string{"Ca", "Cd", "Cad", "Ac", "Ad", "Acd", "Dc", "Da", "Dca"}
   fmt.Print("  Health ")
-  plot.Baaar( float64(player.Status.Health)/1000 , 50, "right" )
+  plot.Baaar( float64(player.Status.Health)/1000 , 72, "right" )
   fmt.Printf(" | Vitality: %.0f\n  ", player.Attributes.Vitality)
   if !player.Basics.ID.NPC {
-    plot.Baaar( float64(len(player.Status.Pool))/player.Attributes.Poolsize, 50, "up" )
+    plot.Baaar( float64(len(player.Status.Pool))/player.Attributes.Poolsize, 72, "up" )
     fmt.Printf(" Energy | Pool size: %.0f\n", player.Attributes.Poolsize)
   } ; fmt.Println()
   elem, stats = funcs.ReStr(player.Basics.Body)
@@ -60,9 +60,9 @@ func PlayerStatus(player player.Player) {
     abilities := balance.StreamAbilities_FromStream(every)
     for _, each := range attrs {
       if abilities[each] != 0 {
-        line = fmt.Sprintf("%s|%0.1f%%", line, abilities[each])
+        line = fmt.Sprintf("%s|%.0f%%", line, abilities[each])
       } else {
-        line = fmt.Sprintf("%s|---", line)
+        line = fmt.Sprintf("%s|   ", line)
       }
     }
     playerTuple = plot.AddRow(line,playerTuple)

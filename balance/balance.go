@@ -31,7 +31,7 @@ func Regeneration_DotWeight_FromStream(stream funcs.Stream) funcs.Dot {
 func Cast_Common_Failed(need int, got int) bool { return funcs.Rand() >= math.Sqrt(float64(got)/float64(need)) }
 func Cast_Common_TimePerString(str funcs.Stream) float64 { _, stats := ReStr(str) ; return Regeneration_DefaultTimeout()/math.Log2(stats[1]+1) }
 func Cast_Common_ExecutionRapidity(str funcs.Stream) float64 { _, stats := ReStr(str) ; return math.Log10(stats[2]+10) }
-func Cast_Common_DotsPerString(str funcs.Stream) int { _, stats := ReStr(str) ; return funcs.ChancedRound(10* math.Sqrt(math.Log2(1+funcs.Vector(stats[0],stats[1],stats[2]))) ) }
+func Cast_Common_DotsPerString(str funcs.Stream, born int) int { _, stats := ReStr(str) ; return funcs.ChancedRound( 10 * math.Sqrt(math.Log2(1+funcs.Vector(stats[0],stats[1],stats[2]))) )-born }
 
 func StreamStructure2(a float64, b float64, c float64, t float64) bool { if a > b && b*math.Sqrt(t) > c && a/b > 1 && a/b < t { return true } ; return false }
 func StreamStructure3(a float64, b float64, c float64, t float64) bool { if ( StreamStructure2(a,b,c,t) || StreamStructure2(a,c,b,t) ) && math.Max(math.Max(a/b,a/c),b/c)<math.Cbrt(t)*math.Cbrt(t) && math.Max(b/c,c/b) < math.Sqrt(t) { return true } ; return false }

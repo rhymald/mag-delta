@@ -14,7 +14,7 @@ type LogFrame struct {
 func CleanFrame() LogFrame {
   buffer := LogFrame{}
   buffer.Player = ""
-  buffer.Size = 10
+  buffer.Size = 13
   buffer.Actions = append(buffer.Actions," ")
   buffer.Actions = append(buffer.Actions,"Welcome!")
   buffer.Actions = append(buffer.Actions,"Here you can find a list of actions you have made.")
@@ -28,16 +28,17 @@ func CleanFrame() LogFrame {
 
 func Frame(frame LogFrame){
   fmt.Println()
-  fmt.Println(" ─┼──[Player status]─────────────────────────────────────────────")
-  fmt.Println("    " ,frame.Player)
-  fmt.Println(" ─┼─────[Actions]────────────────────────────────────────────────")
+  fmt.Println("\t\t ─┼──[Player status]─────────────────────────────────────────────")
+  fmt.Println("\t\t    " ,frame.Player)
+  fmt.Println("\t\t ─┼─────[Actions]────────────────────────────────────────────────")
   for x:=0 ; x<(len(frame.Actions)) ; x++ {
     // if x%2 == 1 {fmt.Printf(" ")}
-    fmt.Printf("    %s\n" ,frame.Actions[x])
+    fmt.Printf("\t\t    %s\n" ,frame.Actions[x])
   }
-  fmt.Println(" ─┼───────[Foes]─────────────────────────────────────────────────")
-  fmt.Println("    " ,frame.Foe)
-  fmt.Println(" ─┼────────[End]─────────────────────────────────────────────────")
+  for x:=0 ; x<(frame.Size - (len(frame.Actions))) ; x++ {fmt.Println()}
+  fmt.Println("\t\t ─┼───────[Foes]─────────────────────────────────────────────────")
+  fmt.Println("\t\t    " ,frame.Foe)
+  fmt.Println("\t\t ─┼────────[End]─────────────────────────────────────────────────")
   fmt.Println()
 }
 

@@ -32,6 +32,7 @@ var (
 )
 
 func debug() {
+  fmt.Print(funcs.PickXFrom(17, 39)); fmt.Print(funcs.PickXFrom(4, 9)); fmt.Print(funcs.PickXFrom(17, 3)) ; fmt.Println(funcs.PickXFrom(4, 6))
   for x:=0 ;x<len(funcs.Physical); x++ { fmt.Printf(" x[%s]%.3f ", funcs.Physical[x], math.Pow(math.Log2(float64(x)+1), 2) ) } ; fmt.Println()
   for x:=0 ;x<3; x++ { fmt.Printf(" ^[%s]%.3f ", funcs.Elements[x], math.Pow(math.Sqrt(math.Log2(float64(x)+2))-1, 2)+1 ) } ; fmt.Println()
   a,b,c,d,e := 0,0,0,0,0
@@ -63,7 +64,7 @@ func init() {
   if reborn {fmt.Println(("[generating new...]"))} else {fmt.Println((id))}
   fmt.Printf("\u001b[0m")
   if reborn {
-    playerID = player.PlayerBorn(&You, 0, &Frame.Player)
+    playerID = player.PlayerBorn(&You, 1, &Frame.Player)
     server.AddPlayer(StatChain, You)
     fmt.Println("\n\t", plot.Bar("  Successfully created new player  ",4),"\n")
   } else {
@@ -87,7 +88,7 @@ func init() {
     go func() { for { server.UpdPlayerStats(StatChain, You) } }()
     go func() { for { server.UpdPlayerStatE(StatChain, You) } }()
     client.PlayerStatus(You)
-    player.FoeSpawn(&Target,0,&Frame.Foe)
+    player.FoeSpawn(&Target, 1, &Frame.Foe)
     client.PlayerStatus(Target)
   }
   fmt.Println("\t     ",plot.Bar("Press [Enter] to continue",0),"\n")
@@ -99,7 +100,6 @@ func main() {
   defer os.Exit(0)
   defer StatChain.Database.Close()
   plot.ShowMenu(" ")
-  grow := math.Cbrt(math.Phi)-1
   var b = make([]byte, 1)
   go func() {
     exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
@@ -120,8 +120,7 @@ func main() {
       }
       if Target.Status.Health <= 0 { 
         player.PlayerEmpower(&You, 0, &Frame.Player) 
-        _, stats := funcs.ReStr(You.Basics.Streams[0])
-        player.FoeSpawn(&Target, (funcs.Vector(stats[0],stats[1],stats[2])/math.Sqrt(3)-1)+grow, &Frame.Foe)
+        player.FoeSpawn(&Target, 1024, &Frame.Foe)
       }
     }
   }()
@@ -135,7 +134,7 @@ func main() {
       blockchain.ListBlocks(StatChain, playerID, false)
       time.Sleep( time.Millisecond * time.Duration( 2048 ))
     } else {
-      client.PlayerStatus(You); client.PlayerStatus(Target) ; plot.Frame(Frame)
+      client.PlayerStatus(Target) ; plot.Frame(Frame) ; client.PlayerStatus(You)
       time.Sleep( time.Millisecond * time.Duration( 128 ))
     }
   }
