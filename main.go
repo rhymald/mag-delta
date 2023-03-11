@@ -33,12 +33,16 @@ var (
 
 func debug() {
   // player fetch
+  var ef player.Player 
   var ad player.Player 
   var bc player.Player 
-  _, _ = player.PlayerBorn(&ad, 1, &Frame.Player) , player.PlayerBorn(&bc, 2, &Frame.Player)
+  _, _, _ = player.PlayerBorn(&ef, 3, &Frame.Player), player.PlayerBorn(&ad, 1, &Frame.Player), player.PlayerBorn(&bc, 2, &Frame.Player)
   fmt.Println(player.Fetch_Stats(bc.Basics,ad.Basics))
-  bc.Basics.ID.Born = ad.Basics.ID.Born
-  fmt.Println(player.Fetch_Stats(bc.Basics,ad.Basics))
+  bc.Basics.ID.Born, ef.Basics.ID.Born = ad.Basics.ID.Born, ad.Basics.ID.Born  
+  gh := player.Fetch_Stats(bc.Basics,ad.Basics)
+  fmt.Println(gh) ; fmt.Println(player.Grow_Stats(ef.Basics,gh))
+  player.TakeAll_Stats(&ef, []player.BasicStats{gh, gh, gh})
+  fmt.Println(ef)
   // picker
   fmt.Print(funcs.PickXFrom(17, 39)); fmt.Print(funcs.PickXFrom(4, 9)); fmt.Print(funcs.PickXFrom(17, 3)) ; fmt.Println(funcs.PickXFrom(4, 6))
   // list all elements
