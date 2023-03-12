@@ -89,14 +89,14 @@ func CalculateAttributes_FromBasics(player *Player){
   *player = buffer
 }
 
-func PlayerBorn(player *Player, mean float64, logger *string) string {
+func PlayerBorn(player *Player, strc int, mean float64, logger *string) string {
   buffer := Player{}
   buffer.Basics.ID.NPC = false
   buffer.Basics.ID.Description = "Oh, that's me!"
   buffer.Basics.ID.Born = funcs.Epoch()
   buffer.Basics.ID.Last = buffer.Basics.ID.Born
   buffer.Basics.Body = balance.BasicStats_Stream_FromNormaleWithElement(2, funcs.Physical[1])
-  strc := balance.BasicStats_StreamsCountAndModifier(buffer.Basics.ID.Born)
+  if strc < 2 || strc > 5 { strc = balance.BasicStats_StreamsCountAndModifier(buffer.Basics.ID.Born) }
   for i:=0; i<strc; i++ { buffer.Basics.Streams = append(buffer.Basics.Streams, balance.BasicStats_Stream_FromNormaleWithElement(mean/float64(strc), funcs.Elements[0])) }
   CalculateAttributes_FromBasics(&buffer)
   buffer.Status.Health = int(1000/math.Sqrt(buffer.Attributes.Vitality)) //from db

@@ -8,6 +8,7 @@ import (
 	"rhymald/mag-delta/balance"
 	"time"
 	"fmt"
+	"errors"
 )
 
 func Fetch_Stats(last BasicStats, prev BasicStats) BasicStats {
@@ -16,7 +17,7 @@ func Fetch_Stats(last BasicStats, prev BasicStats) BasicStats {
 	if last.ID.Description[:6] == "ERROR!" || prev.ID.Description[:6] == "ERROR!" { buffer.ID.Description = "ERROR! A state is already ruined" ; return buffer } else { buffer.ID.Description = last.ID.Description }
 	if last.ID.NPC == prev.ID.NPC { buffer.ID.NPC = last.ID.NPC } else { buffer.ID.Description = "ERROR! Foreign stats: ID/NPC" ; return buffer } 
 	if last.ID.Born == prev.ID.Born { buffer.ID.Born = last.ID.Born } else { buffer.ID.Description = "ERROR! Foreign stats: ID/Born" ; return buffer }
-	if last.ID.Last > prev.ID.Last { buffer.ID.Last = last.ID.Last } else { buffer.ID.Description = "ERROR! Newer stats: ID/Last" ; return buffer }
+	if last.ID.Last >= prev.ID.Last { buffer.ID.Last = last.ID.Last } else { buffer.ID.Description = "ERROR! Newer stats: ID/Last" ; return buffer }
 	// BODY 
 	lelem, _ := funcs.ReStr(last.Body) 
 	pelem, _ := funcs.ReStr(prev.Body) 
@@ -46,7 +47,7 @@ func Fetch_Stats(last BasicStats, prev BasicStats) BasicStats {
 	negativeCheckFail := false
 	for _, each := range buffer.Streams {
 		belem, _ := funcs.ReStr(each) 
-		negativeCheckFail = each[belem][0] <= 0 || each[belem][1] <= 0 || each[belem][1] <= 0	
+		negativeCheckFail = negativeCheckFail || each[belem][0] < 0 || each[belem][1] < 0 || each[belem][2] < 0	
 	}
 	if negativeCheckFail { buffer.ID.Description = "ERROR! Negative check failed, stream grow can't be negative (body can)" }
 	return buffer
@@ -58,7 +59,7 @@ func Grow_Stats(last BasicStats, diff BasicStats) BasicStats {
 	if last.ID.Description[:6] == "ERROR!" || diff.ID.Description[:6] == "ERROR!" { buffer.ID.Description = "ERROR! Diff or state is already ruined" ; return buffer } else { buffer.ID.Description = diff.ID.Description }
 	if last.ID.NPC == diff.ID.NPC { buffer.ID.NPC = diff.ID.NPC } else { buffer.ID.Description = "ERROR! Foreign stats: ID/NPC" ; return buffer } 
 	if last.ID.Born == diff.ID.Born { buffer.ID.Born = diff.ID.Born } else { buffer.ID.Description = "ERROR! Foreign stats: ID/Born" ; return buffer }
-	if last.ID.Last < diff.ID.Last { buffer.ID.Last = diff.ID.Last } else { buffer.ID.Description = "ERROR! Fetch in older: ID/Last" ; return buffer }
+	if last.ID.Last <= diff.ID.Last { buffer.ID.Last = diff.ID.Last } else { buffer.ID.Description = "ERROR! Fetch in older: ID/Last" ; return buffer }
 	// BODY 
 	lelem, _ := funcs.ReStr(last.Body) 
 	delem, _ := funcs.ReStr(diff.Body) 
@@ -86,24 +87,26 @@ func Grow_Stats(last BasicStats, diff BasicStats) BasicStats {
 	// ITEMS - tbd not implemented totally, add DROP / LOOT prefix to description
 	// NEGATIVE check
 	belem, _ := funcs.ReStr(buffer.Body) 
-	negativeCheckFail := buffer.Body[belem][0] <= 0 || buffer.Body[belem][1] <= 0 || buffer.Body[belem][1] <= 0
+	negativeCheckFail := buffer.Body[belem][0] <= 0 || buffer.Body[belem][1] <= 0 || buffer.Body[belem][2] <= 0
 	for _, each := range buffer.Streams {
 		belem, _ = funcs.ReStr(each) 
-		negativeCheckFail = negativeCheckFail || each[belem][0] <= 0 || each[belem][1] <= 0 || each[belem][1] <= 0	
+		negativeCheckFail = negativeCheckFail || each[belem][0] <= 0 || each[belem][1] <= 0 || each[belem][2] <= 0	
 	}
 	if negativeCheckFail { buffer.ID.Description = "ERROR! Negative check failed, streams and body can't be negative" }
 	return buffer
 }
 
-func TakeAll_Stats(base *Player, improves []BasicStats) {
+func TakeAll_Stats(base *Player, improves []BasicStats) error {
+	wasLogged := *&base.Attributes.Login
   *&base.Attributes.Login = false // to stop regen
-  time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() ))
-	for index, each := range improves { if each.ID.Description[:6] == "ERROR!" { fmt.Println("ERROR: Composing stats failed - some stats are invalid:", index) ; return } }
+  if !wasLogged { time.Sleep( time.Millisecond * time.Duration( balance.Regeneration_DefaultTimeout() )) }
+	for index, each := range improves { if each.ID.Description[:6] == "ERROR!" { return errors.New(fmt.Sprintf("ERROR: Composing stats failed - some stats are invalid: %d", index)) } }
 	buffer := *&base.Basics
 	for index, each := range improves {
 		buffer = Grow_Stats(buffer, each)
-		if buffer.ID.Description[:6] == "ERROR!" { fmt.Println("ERROR: Applying stats failed - final invalid:", index) ; return }
+		if buffer.ID.Description[:6] == "ERROR!" { return errors.New(fmt.Sprintf("ERROR: Applying stats failed - final invalid: %d", index)) }
 	}
 	*&base.Basics = buffer
 	CalculateAttributes_FromBasics(base)
+	return nil
 }

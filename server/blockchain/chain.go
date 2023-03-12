@@ -128,7 +128,7 @@ func ListBlocks(chain *BlockChain, namespace string, extended bool) {
   next := &block{Time: time.Now().UnixNano()-1317679200000000000-chain.Epoch, Namespace: namespace}
   if !extended {
     fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
-    for i:=0; i<7; i++ {
+    for i:=0; i<1000; i++ {
       each := deeper(iter)
       if each.Namespace != next.Namespace { fmt.Printf("────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n") }
       fmt.Printf("\u001b[1m%x\u001b[0m\n", string(each.Hash))
@@ -146,8 +146,7 @@ func ListBlocks(chain *BlockChain, namespace string, extended bool) {
       next = each
     }
     fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
-  }
-  if extended {
+  } else {
     playerList := FindByPrefixes(chain, []byte("/"))
     fmt.Println(" ─────── ──── ───────── ─ ─────── Metadata info ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
     for _, each := range playerList { fmt.Println(string(each[0]), fmt.Sprintf("%x", each[1])) }

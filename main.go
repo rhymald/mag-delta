@@ -2,15 +2,15 @@ package main
 
 import (
   "fmt"
-  "math"
+  // "math"
   "rhymald/mag-delta/client/plot"
   "rhymald/mag-delta/server/blockchain"
   "rhymald/mag-delta/server"
   "rhymald/mag-delta/client"
   "rhymald/mag-delta/player"
-  "rhymald/mag-delta/balance"
+  // "rhymald/mag-delta/balance"
   "rhymald/mag-delta/act"
-  "rhymald/mag-delta/funcs"
+  // "rhymald/mag-delta/funcs"
   "os"
   "os/exec"
   "time"
@@ -31,42 +31,43 @@ var (
   Keys chan string = make(chan string)
 )
 
-func debug() {
-  // player fetch
-  var ef player.Player 
-  var ad player.Player 
-  var bc player.Player 
-  _, _, _ = player.PlayerBorn(&ef, 3, &Frame.Player), player.PlayerBorn(&ad, 1, &Frame.Player), player.PlayerBorn(&bc, 2, &Frame.Player)
-  fmt.Println(player.Fetch_Stats(bc.Basics,ad.Basics))
-  bc.Basics.ID.Born, ef.Basics.ID.Born = ad.Basics.ID.Born, ad.Basics.ID.Born  
-  gh := player.Fetch_Stats(bc.Basics,ad.Basics)
-  fmt.Println(gh) ; fmt.Println(player.Grow_Stats(ef.Basics,gh))
-  player.TakeAll_Stats(&ef, []player.BasicStats{gh, gh, gh})
-  fmt.Println(ef)
-  // picker
-  fmt.Print(funcs.PickXFrom(17, 39)); fmt.Print(funcs.PickXFrom(4, 9)); fmt.Print(funcs.PickXFrom(17, 3)) ; fmt.Println(funcs.PickXFrom(4, 6))
-  // list all elements
-  for x:=0 ;x<len(funcs.Physical); x++ { fmt.Printf(" x[%s]%.3f ", funcs.Physical[x], math.Pow(math.Log2(float64(x)+1), 2) ) } ; fmt.Println()
-  for x:=0 ;x<3; x++ { fmt.Printf(" ^[%s]%.3f ", funcs.Elements[x], math.Pow(math.Sqrt(math.Log2(float64(x)+2))-1, 2)+1 ) } ; fmt.Println()
-  // streams count randomizer
-  a,b,c,d,e := 0,0,0,0,0
-  for x:=int64(0); x<1000; x++ { 
-    aaa := balance.BasicStats_StreamsCountAndModifier(funcs.Epoch())
-    if aaa == 2 {a++} else if aaa == 3 {b++} else if aaa == 4 {c++} else if aaa == 5 {d++} else {e++}
-  }
-  fmt.Println("    ||:",a,"\t|||:",b,"\t||||:",c,"\t|||||:",d,"\terr:",e)
-}
+// func debug() {
+//   // player fetch
+//   var ef player.Player 
+//   var ad player.Player 
+//   var bc player.Player 
+//   _, _, _ = player.PlayerBorn(&ef, 3, &Frame.Player), player.PlayerBorn(&ad, 1, &Frame.Player), player.PlayerBorn(&bc, 2, &Frame.Player)
+//   fmt.Println("Different:", player.Fetch_Stats(bc.Basics,ad.Basics))
+//   fmt.Println("Same:     ", player.Fetch_Stats(bc.Basics,bc.Basics))
+//   bc.Basics.ID.Born, ef.Basics.ID.Born = ad.Basics.ID.Born, ad.Basics.ID.Born  
+//   gh := player.Fetch_Stats(bc.Basics,ad.Basics)
+//   fmt.Println("Different 2:", gh) ; fmt.Println("Sum 2:      ", player.Grow_Stats(ef.Basics,gh))
+//   player.TakeAll_Stats(&ef, []player.BasicStats{gh, gh, gh})
+//   fmt.Println("Cascade 2:  ", ef)
+//   // picker
+//   fmt.Print(funcs.PickXFrom(17, 39)); fmt.Print(funcs.PickXFrom(4, 9)); fmt.Print(funcs.PickXFrom(17, 3)) ; fmt.Println(funcs.PickXFrom(4, 6))
+//   // list all elements
+//   for x:=0 ;x<len(funcs.Physical); x++ { fmt.Printf(" x[%s]%.3f ", funcs.Physical[x], math.Pow(math.Log2(float64(x)+1), 2) ) } ; fmt.Println()
+//   for x:=0 ;x<3; x++ { fmt.Printf(" ^[%s]%.3f ", funcs.Elements[x], math.Pow(math.Sqrt(math.Log2(float64(x)+2))-1, 2)+1 ) } ; fmt.Println()
+//   // streams count randomizer
+//   a,b,c,d,e := 0,0,0,0,0
+//   for x:=int64(0); x<1000; x++ { 
+//     aaa := balance.BasicStats_StreamsCountAndModifier(funcs.Epoch())
+//     if aaa == 2 {a++} else if aaa == 3 {b++} else if aaa == 4 {c++} else if aaa == 5 {d++} else {e++}
+//   }
+//   fmt.Println("    ||:",a,"\t|||:",b,"\t||||:",c,"\t|||||:",d,"\terr:",e)
+// }
 
 // read args, open or generate chain
 func connect() string { //read app args and connect to db
-  debug()
+  // debug()
   id := flag.String("p", "[no id defined]", "Player ID to login")
   flag.StringVar(&DBPath, "d", "cache", "Directory for cache")
   flag.BoolVar(&reborn, "n", false, "Create new player")
   help := flag.Bool("h", false, "Show this help")
   flag.Parse()
   if *help { fmt.Println("Application usage: keys") ; flag.PrintDefaults() ; fmt.Println(); os.Exit(1)}
-  fmt.Println("\n\t\t", plot.Bar("  Initializing... ",0), "\n")
+  fmt.Println("\n\t\t", plot.Bar("  Initializing... ",0))
   StatChain = blockchain.InitBlockChain(DBPath)
   return *id
 }
@@ -78,23 +79,23 @@ func init() {
   if reborn {fmt.Println(("[generating new...]"))} else {fmt.Println((id))}
   fmt.Printf("\u001b[0m")
   if reborn {
-    playerID = player.PlayerBorn(&You, 1, &Frame.Player)
+    playerID = player.PlayerBorn(&You, 0, 1, &Frame.Player)
     server.AddPlayer(StatChain, You)
-    fmt.Println("\n\t", plot.Bar("  Successfully created new player  ",4),"\n")
+    fmt.Println("\n\t", plot.Bar("  Successfully created new player  ",4))
   } else {
     if len(id) == 14 {
       You = server.AssumePlayer(StatChain, id, &Frame.Player)
       player.Live(&You, &Frame.Player)
       if You.Basics.ID.Born == 0 {
         fmt.Println("\n\t\t", plot.Bar("   Login failed   ",6))
-        fmt.Println("\t\t", plot.Bar("  No such player  ",6),"\n")
+        fmt.Println("\t\t", plot.Bar("  No such player  ",6))
         playerID = fmt.Sprintf("/Players")
       } else {
-        fmt.Println("\n\t\t", plot.Bar("Successfully login",1),"\n")
+        fmt.Println("\n\t\t", plot.Bar("Successfully login",1))
         playerID = fmt.Sprintf("/Session/%s", id)
       }
     } else {
-      fmt.Println("\n\t\t", plot.Bar(" Invalid playerId ",6),"\n")
+      fmt.Println("\n\t\t", plot.Bar(" Invalid playerId ",6))
       playerID = fmt.Sprintf("/Players")
     }
   }
@@ -105,7 +106,7 @@ func init() {
     player.FoeSpawn(&Target, 1, &Frame.Foe)
     client.PlayerStatus(Target)
   }
-  fmt.Println("\t     ",plot.Bar("Press [Enter] to continue",0),"\n")
+  fmt.Println("\t     ",plot.Bar("Press [Enter] to continue",0))
   fmt.Scanln()
 }
 

@@ -17,6 +17,7 @@ func AssumePlayer(chain *blockchain.BlockChain, id string, logger *string) playe
   stateat := chain.LastHash[fmt.Sprintf("/Session/%s", id)]
   if len(statsat) != len(stateat) || len(statsat) == 0 { return dummy }
   chain.Unlock()
+
   err := chain.Database.View(func(txn *badger.Txn) error {
     item, err := txn.Get([]byte(statsat))
     statsJson, err = item.ValueCopy(statsat)
@@ -25,6 +26,7 @@ func AssumePlayer(chain *blockchain.BlockChain, id string, logger *string) playe
     return err
   })
   if err != nil { fmt.Println(err) } else { dummy.Basics = statsFromJson(string(statsJson), dummy.Basics) }
+
   err = chain.Database.View(func(txn *badger.Txn) error {
     item, err := txn.Get([]byte(stateat))
     stateJson, err = item.ValueCopy(stateat)
@@ -33,6 +35,7 @@ func AssumePlayer(chain *blockchain.BlockChain, id string, logger *string) playe
     return err
   })
   if err != nil { fmt.Println(err) } else { dummy.Status = stateFromJson(string(stateJson), dummy.Status) }
+  
   player.CalculateAttributes_FromBasics(&dummy)
   return dummy
 }

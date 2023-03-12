@@ -41,7 +41,7 @@ func AddBlock(chain *BlockChain, data string, namespace string, behind []byte) [
 }
 
 func takeDiff(ns string, epoch int64) int {
-  maxdiff := 16.0// math.Log2(float64(epoch)+1)/math.Log2(1000*math.Phi)
+  maxdiff := 24.0// math.Log2(float64(epoch)+1)/math.Log2(1000*math.Phi)
   for diff, _ := range Diff {
     // fmt.Println(diff, ns)
     trigger := false
