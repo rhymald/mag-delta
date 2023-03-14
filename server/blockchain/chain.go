@@ -106,7 +106,7 @@ func iterator(chain *BlockChain, namespace string) *bcIterator {
   return &bcIterator{Current: current, Database: chain.Database}
 }
 
-func deeper(iter *bcIterator) *block {
+func deeper(iter *bcIterator, triggers bool) *block {
   var block *block
   err := iter.Database.View(func(txn *badger.Txn) error {
     item, err := txn.Get(iter.Current)
@@ -117,7 +117,7 @@ func deeper(iter *bcIterator) *block {
   })
   if err != nil { fmt.Println(err) }
   iter.Current = block.Prev // step back
-  if len(block.Behind)>0 { iter.Current = block.Behind }
+  if len(block.Behind)>0 && triggers { iter.Current = block.Behind }
   return block
 }
 
@@ -128,11 +128,11 @@ func ListBlocks(chain *BlockChain, namespace string, extended bool) {
   next := &block{Time: time.Now().UnixNano()-1317679200000000000-chain.Epoch, Namespace: namespace}
   if !extended {
     fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
-    for i:=0; i<1000; i++ {
-      each := deeper(iter)
+    for {
+      each := deeper(iter, false)
       if each.Namespace != next.Namespace { fmt.Printf("────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n") }
       fmt.Printf("\u001b[1m%x\u001b[0m\n", string(each.Hash))
-      if len(each.Behind)>0 { fmt.Printf("\u001b[1mTriggered by\u001b[0m %x\n", string(each.Behind)) }
+      if len(each.Behind)>0 { fmt.Printf("\u001b[7mTriggered by \u001b[0m%x\n", string(each.Behind)) }
       fmt.Printf("   %d'", -depth)
       fmt.Printf("\u001b[1m%s\u001b[0m", each.Namespace)
       fmt.Printf(" \u001b[1mTime\u001b[0m %d", each.Time)
@@ -150,6 +150,6 @@ func ListBlocks(chain *BlockChain, namespace string, extended bool) {
     playerList := FindByPrefixes(chain, []byte("/"))
     fmt.Println(" ─────── ──── ───────── ─ ─────── Metadata info ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
     for _, each := range playerList { fmt.Println(string(each[0]), fmt.Sprintf("%x", each[1])) }
-    fmt.Println(" ─────── ──── ───────── ─ ─────── ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n")
+    fmt.Println(" ─────── ──── ───────── ─ ─────── ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
   }
 }

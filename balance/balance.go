@@ -28,6 +28,8 @@ func Regeneration_DotWeight_FromStream(stream funcs.Stream) funcs.Dot {
   return map[string]int{ elem : funcs.ChancedRound(w*(funcs.Rand()*0.2+0.9)) }
 }
 
+func Cast_Common_Herald(x int) float64 { return math.Sqrt(float64(x-1))/math.Sqrt(float64(6-x)) }
+func Cast_Common_Bender(x int) float64 { return 1/Cast_Common_Herald(x) }
 func Cast_Common_Failed(need int, got int) bool { return funcs.Rand() >= math.Sqrt(float64(got)/float64(need)) }
 func Cast_Common_TimePerString(str funcs.Stream) float64 { _, stats := ReStr(str) ; return Regeneration_DefaultTimeout()/math.Log2(stats[1]+1) }
 func Cast_Common_ExecutionRapidity(str funcs.Stream) float64 { _, stats := ReStr(str) ; return math.Log10(stats[2]+10) }

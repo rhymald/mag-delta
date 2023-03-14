@@ -6,7 +6,7 @@ import (
   "rhymald/mag-delta/player"
   "rhymald/mag-delta/client/plot"
   "math/rand"
-  // "math"
+  "math"
   "time"
   "fmt"
 )
@@ -28,10 +28,10 @@ func Fractal_Jinx(caster *player.Player, target *player.Player, logs *plot.LogFr
   for _, each := range picked {
     _, stats := funcs.ReStr(caster.Basics.Streams[each])
     dotsForConsume := balance.Cast_Common_DotsPerString(caster.Basics.Streams[each], minstreams) //Cre
-    reach += 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Basics.Streams[each]) / float64(minstreams) // Des; effectiveness accumulation: for stats
+    reach += 1024.0 / balance.Cast_Common_ExecutionRapidity(caster.Basics.Streams[each]) / balance.Cast_Common_Bender(minstreams) // Des; effectiveness accumulation: for stats
     totalDotsNeeded += dotsForConsume // effectiveness accumulation: for cast success chance
-    pause := 1/float64(dotsForConsume) * balance.Cast_Common_TimePerString(caster.Basics.Streams[each]) // Alt
-    totalpause += pause * float64(dotsForConsume) // effectiveness accumulation: for stats
+    pause := balance.Cast_Common_TimePerString(caster.Basics.Streams[each]) / float64(dotsForConsume) / math.Sqrt(float64(minstreams-1))  // Alt
+    totalpause += pause * balance.Cast_Common_Bender(minstreams) // effectiveness accumulation: for stats
     plot.AddAction(logs, fmt.Sprintf("%s Burn: stream #%d demands %d dots ", castId, each, dotsForConsume))
     action.By = append(action.By, each) 
     for i:=0; i<dotsForConsume; i++ {

@@ -21,18 +21,19 @@ type block struct {
   Nonce int64
 }
 
-func createBlock(data string, ns string, prevHash []byte, diff int, behind []byte, epoch int64) *block {
+func createBlock(data string, ns string, prevHash []byte, diff int, behind []byte, epoch int64) (*block, int) {
   block := &block{Hash: []byte{}, Data: []byte(data), Prev: prevHash, Behind: behind, Time: epoch, Nonce: 0, Namespace: ns }
   pow := newProof(block, diff)
-  nonce, hash := run(pow)
+  nonce, hash, counter := run(pow)
   block.Hash = hash[:]
   block.Nonce = nonce
-  return block
+  return block, counter
 }
 
 func genesis() *block {
   epoch := time.Now().UnixNano()-1317679200000000000
-  return createBlock(base64.StdEncoding.EncodeToString([]byte("GENESIS BLOCK: ThickCat Concensus Protocol initialized. Hello, artifical World!")), "/", []byte{}, takeDiff("/", epoch), []byte{}, epoch)
+  genblock, _ := createBlock(base64.StdEncoding.EncodeToString([]byte("GENESIS BLOCK: ThickCat Concensus Protocol initialized. Hello, artifical World!")), "/", []byte{}, takeDiff("/", epoch), []byte{}, epoch)
+  return genblock
 }
 
 func serialize(b *block) []byte {

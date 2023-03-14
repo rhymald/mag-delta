@@ -115,14 +115,15 @@ func Clean(){
 
 func ShowMenu(key string) {
   fmt.Printf("\n\t\t\t\t ───── %s ───────────┼─\n", Color("Actions",1))
-  fmt.Printf("\t\t\t\t                          │\n")
+  // fmt.Printf("\t\t\t\t                          │\n")
   if key == "\n" || key == "\t" { key = " " }
   if key == "e" {fmt.Printf("\t\t\t\t    %s Jinx[d]     │\n", Bar(key,0))} else {fmt.Printf("\t\t\t\t        e     Jinx[d]     │\n")}
-  fmt.Printf("\t\t\t\t                          │\n")
+  if key == "+" {fmt.Printf("\t\t\t\t    %s Upgrade     │\n", Bar(key,0))} else {fmt.Printf("\t\t\t\t        +     Upgrade     │\n")}
+  // fmt.Printf("\t\t\t\t                          │\n")
   fmt.Printf("\t\t\t\t ─┼─── %s ──────────────┼─\n", Color("Info",3))
-  fmt.Printf("\t\t\t\t  │\n")
+  // fmt.Printf("\t\t\t\t  │\n")
   if key == "?" {fmt.Printf("\t\t\t\t  │  Chain \t %s \n", Bar(key,0))} else {fmt.Printf("\t\t\t\t  │  Chain \t     ?     \n")}
-  if key != "e" && key != "?" {fmt.Printf("\t\t\t\t  │  Refresh \t %s \n", Bar(key,0))} else {fmt.Printf("\t\t\t\t  │  Refresh \t     ~     \n")}
-  fmt.Printf("\t\t\t\t  │\n")
+  if key != "e" && key != "?" && key != "+" {fmt.Printf("\t\t\t\t  │  Refresh \t %s \n", Bar(key,0))} else {fmt.Printf("\t\t\t\t  │  Refresh \t     ~     \n")}
+  // fmt.Printf("\t\t\t\t  │\n")
   fmt.Printf("\t\t\t\t ─┼─────────────────────────\n\n")
 }
