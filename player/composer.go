@@ -11,13 +11,15 @@ import (
 	"errors"
 )
 
-func Fetch_Stats(last BasicStats, prev BasicStats) BasicStats {
+func Fetch_Stats(last BasicStats, prev BasicStats) (BasicStats, error) {
 	buffer := BasicStats{}
 	// ID block
-	if last.ID.Description[:6] == "ERROR!" || prev.ID.Description[:6] == "ERROR!" { buffer.ID.Description = "ERROR! A state is already ruined" ; return buffer } else { buffer.ID.Description = last.ID.Description }
-	if last.ID.NPC == prev.ID.NPC { buffer.ID.NPC = last.ID.NPC } else { buffer.ID.Description = "ERROR! Foreign stats: ID/NPC" ; return buffer } 
-	if last.ID.Born == prev.ID.Born { buffer.ID.Born = last.ID.Born } else { buffer.ID.Description = "ERROR! Foreign stats: ID/Born" ; return buffer }
-	if last.ID.Last >= prev.ID.Last { buffer.ID.Last = last.ID.Last } else { buffer.ID.Description = "ERROR! Newer stats: ID/Last" ; return buffer }
+	if len(last.ID.Description) < 6 || len(prev.ID.Description) < 0 { buffer.ID.Description = last.ID.Description } else if last.ID.Description[:6] == "ERROR!" || prev.ID.Description[:6] == "ERROR!" { 
+		buffer.ID.Description = "ERROR! A state is already ruined" ; return buffer, errors.New(buffer.ID.Description) 
+	} else { buffer.ID.Description = last.ID.Description }
+	if last.ID.NPC == prev.ID.NPC { buffer.ID.NPC = last.ID.NPC } else { buffer.ID.Description = "ERROR! Foreign stats: ID/NPC" ; return buffer, errors.New(buffer.ID.Description) } 
+	if last.ID.Born == prev.ID.Born { buffer.ID.Born = last.ID.Born } else { buffer.ID.Description = "ERROR! Foreign stats: ID/Born" ; return buffer, errors.New(buffer.ID.Description) }
+	if last.ID.Last >= prev.ID.Last { buffer.ID.Last = last.ID.Last } else { buffer.ID.Description = "ERROR! Newer stats: ID/Last" ; return buffer, errors.New(buffer.ID.Description) }
 	// BODY 
 	lelem, _ := funcs.ReStr(last.Body) 
 	pelem, _ := funcs.ReStr(prev.Body) 
@@ -26,7 +28,7 @@ func Fetch_Stats(last BasicStats, prev BasicStats) BasicStats {
 		stream := make(map[string][3]int)
 		stream[lelem] = [3]int{ last.Body[lelem][0]-prev.Body[pelem][0], last.Body[lelem][1]-prev.Body[pelem][1], last.Body[lelem][2]-prev.Body[pelem][2] }
 		buffer.Body = stream
-	} else { buffer.ID.Description = "ERROR! Wrong body stream element" ; return buffer }
+	} else { buffer.ID.Description = "ERROR! Wrong body stream element" ; return buffer, errors.New(buffer.ID.Description) }
 	// STREAMS
 	for x:=0; x<len(last.Streams)&&x<len(prev.Streams); x++ {
 		lelem, _ = funcs.ReStr(last.Streams[x]) 
@@ -37,11 +39,11 @@ func Fetch_Stats(last BasicStats, prev BasicStats) BasicStats {
 			stream := make(map[string][3]int)
 			stream[lelem] = [3]int{ last.Streams[x][lelem][0]-prev.Streams[x][pelem][0], last.Streams[x][lelem][1]-prev.Streams[x][pelem][1], last.Streams[x][lelem][2]-prev.Streams[x][pelem][2] }
 			buffer.Streams = append(buffer.Streams, stream)
-		} else { buffer.ID.Description = "ERROR! Wrong stream element #"+fmt.Sprint(x) ; return buffer }
+		} else { buffer.ID.Description = "ERROR! Wrong stream element #"+fmt.Sprint(x) ; return buffer, errors.New(buffer.ID.Description) }
 	}
 	if len(last.Streams)-len(prev.Streams) > 0 {
 		for x:=0; x<len(last.Streams)-len(prev.Streams); x++ { buffer.Streams = append(buffer.Streams, last.Streams[x+len(prev.Streams)]) }
-	} else if len(last.Streams)-len(prev.Streams) < 0 { buffer.ID.Description = "ERROR! Wrong stream count (old bigger than new): "+fmt.Sprint(len(last.Streams)-len(prev.Streams)) ; return buffer }
+	} else if len(last.Streams)-len(prev.Streams) < 0 { buffer.ID.Description = "ERROR! Wrong stream count (old bigger than new): "+fmt.Sprint(len(last.Streams)-len(prev.Streams)) ; return buffer, errors.New(buffer.ID.Description) }
 	// ITEMS - tbd not implemented totally, add DROP / LOOT prefix to description
 	// NEGATIVE check
 	negativeCheckFail := false
@@ -49,8 +51,8 @@ func Fetch_Stats(last BasicStats, prev BasicStats) BasicStats {
 		belem, _ := funcs.ReStr(each) 
 		negativeCheckFail = negativeCheckFail || each[belem][0] < 0 || each[belem][1] < 0 || each[belem][2] < 0	
 	}
-	if negativeCheckFail { buffer.ID.Description = "ERROR! Negative check failed, stream grow can't be negative (body can)" }
-	return buffer
+	if negativeCheckFail { buffer.ID.Description = "ERROR! Negative check failed, stream grow can't be negative (body can)" ; return buffer, errors.New(buffer.ID.Description) }
+	return buffer, nil
 }
 
 func Grow_Stats(last BasicStats, diff BasicStats) BasicStats {
@@ -107,6 +109,6 @@ func TakeAll_Stats(base *Player, improves []BasicStats) error {
 		if buffer.ID.Description[:6] == "ERROR!" { return errors.New(fmt.Sprintf("ERROR: Applying stats failed - final invalid: %d", index)) }
 	}
 	*&base.Basics = buffer
-	CalculateAttributes_FromBasics(base)
+	// CalculateAttributes_FromBasics(base)
 	return nil
 }

@@ -101,8 +101,8 @@ func InitBlockChain(dbPath string) *BlockChain {
   return chain
 }
 
-func iterator(chain *BlockChain, namespace string) *bcIterator {
-  chain.Lock() ; current := chain.LastHash[namespace] ; chain.Unlock()
+func iterator(chain *BlockChain, meta string) *bcIterator {
+  chain.Lock() ; current := chain.LastHash[meta] ; chain.Unlock()
   return &bcIterator{Current: current, Database: chain.Database}
 }
 
@@ -121,11 +121,11 @@ func deeper(iter *bcIterator, triggers bool) *block {
   return block
 }
 
-func ListBlocks(chain *BlockChain, namespace string, extended bool) {
+func ListBlocks(chain *BlockChain, meta string, extended bool) {
   // var rows []string
-  iter := iterator(chain, namespace)
+  iter := iterator(chain, meta)
   depth := 0
-  next := &block{Time: time.Now().UnixNano()-1317679200000000000-chain.Epoch, Namespace: namespace}
+  next := &block{Time: time.Now().UnixNano()-1317679200000000000-chain.Epoch, Namespace: meta}
   if !extended {
     fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
     for {
@@ -147,9 +147,27 @@ func ListBlocks(chain *BlockChain, namespace string, extended bool) {
     }
     fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
   } else {
-    playerList := FindByPrefixes(chain, []byte("/"))
+    playerList := FindByPrefixes(chain, []byte("/Players"))
+    // sessionsList := FindByPrefixes(chain, []byte("/Session"))
     fmt.Println(" ─────── ──── ───────── ─ ─────── Metadata info ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
     for _, each := range playerList { fmt.Println(string(each[0]), fmt.Sprintf("%x", each[1])) }
+    // for _, each := range sessionsList { fmt.Println(string(each[0]), fmt.Sprintf("%x", each[1])) }
     fmt.Println(" ─────── ──── ───────── ─ ─────── ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────")
   }
+}
+
+func Gather_Blocks(chain *BlockChain, meta string) [][]byte {
+  var buffer [][]byte 
+  iter := iterator(chain, meta)
+  next := &block{}
+  for {
+    each := deeper(iter, false)
+    equalns := each.Namespace == meta && next.Namespace == meta //for same ns
+    deadend := false ; 
+    if len(meta) >= len(each.Namespace) { deadend = each.Namespace == meta[:len(each.Namespace)] && len(each.Prev) != 0 } // for "/Players"-born ns
+    if len(meta) < len(each.Namespace) { deadend = each.Namespace[:len(meta)] == meta && len(each.Prev) != 0 } // for "/Players"-born ns
+    if equalns || deadend { buffer = append(buffer, each.Data) ; fmt.Println(string(each.Data)) } else { break } 
+    next = each
+  }
+  return buffer
 }

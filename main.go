@@ -104,7 +104,12 @@ func main() {
           go func(){ act.Fractal_Jinx(&You, &Target, &Frame) }()
           Action = " "
         case "+":
-          go func(){ player.PlayerEmpower(&You, 0, &Frame.Player) }()
+          player.PlayerEmpower(&You, 0, &Frame.Player)
+          pid, _ := player.GetID(You)
+          // stateid := fmt.Sprintf("/Session/%s/%s", pid, sid)
+          // statsid := fmt.Sprintf("/Players/%s", pid)
+          anchor := fmt.Sprintf("/Session/%s", pid)
+          _ = blockchain.Gather_Blocks(StatChain, anchor)
           Action = " "
           // player.FoeSpawn(&Target, 1024, &Frame.Foe)
         // default:
