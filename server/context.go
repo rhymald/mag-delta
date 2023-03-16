@@ -5,6 +5,7 @@ import(
   "github.com/dgraph-io/badger"
   "fmt"
   "rhymald/mag-delta/player"
+  "time"
 )
 
 func AssumePlayer(chain *blockchain.BlockChain, id string, logger *string) player.Player {
@@ -40,9 +41,16 @@ func AssumePlayer(chain *blockchain.BlockChain, id string, logger *string) playe
   return dummy
 }
 
-func UpdPlayerStatE(chain *blockchain.BlockChain, person player.Player) {
+func UpdPlayer(chain *blockchain.BlockChain, person *player.Player) {
+  go func() { for { UpdPlayerStats(chain, person) } }()
+  go func() { for { if *&person.Attributes.Login == true { UpdPlayerState(chain, person) } else {
+    time.Sleep( time.Millisecond * time.Duration( 4096 ))
+  } } }()
+}
+
+func UpdPlayerState(chain *blockchain.BlockChain, person *player.Player) {
   dataString := toJson(person.Status)
-  pid, sid := player.GetID(person)
+  pid, sid := player.GetID(*person)
   statsid := fmt.Sprintf("/Players/%s", pid)
   stateid := fmt.Sprintf("/Session/%s/%s", pid, sid)
   anchor := fmt.Sprintf("/Session/%s", pid)
@@ -75,9 +83,12 @@ func UpdPlayerStatE(chain *blockchain.BlockChain, person player.Player) {
   if err != nil { fmt.Println(err) }
 }
 
-func UpdPlayerStats(chain *blockchain.BlockChain, person player.Player) {
+// Cant publish difference between stats,
+// Cant also publish stats behind old states
+// Need total functional rebuild, - TBD in next trial (MAG-Epsilon)
+func UpdPlayerStats(chain *blockchain.BlockChain, person *player.Player) {
   dataString := toJson(person.Basics)
-  pid, sid := player.GetID(person)
+  pid, sid := player.GetID(*person)
   stateid := fmt.Sprintf("/Session/%s/%s", pid, sid)
   statsid := fmt.Sprintf("/Players/%s", pid)
   anchor := fmt.Sprintf("/Session/%s", pid)

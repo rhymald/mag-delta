@@ -11,6 +11,11 @@ import (
 	"errors"
 )
 
+// Cant publish difference between stats,
+// Cant also publish stats behind old states
+// Need total functional rebuild, - TBD in next trial (MAG-Epsilon)
+// ALL THESE FUNCs are useless for now.
+
 func Fetch_Stats(last BasicStats, prev BasicStats) (BasicStats, error) {
 	buffer := BasicStats{}
 	// ID block

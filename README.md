@@ -1,9 +1,18 @@
 ### Welcome!
 Developing game: mechanics are based on my novels. Trial number four! 
 
+# EXPERIMENT FAILED
+- Can't publish stats behind latest state of prev stats,
+- So can't publish fetch between states (only latest state).
+
+Need total rework.  
+Meet the new trial MAG-Epsilon soon.  
+
 # Usage
- For build with go v.18+: `go build .`  
- For run with go v.18+: `go run . -p 1234-123456789 -d cache/bc`  
+ - For build with go v.18+  
+   `go build .`  
+ - For run with go v.18+  
+ `go run . -p 1234-123456789 -d cache/bc`  
 
 Command:
 ```bash
@@ -30,6 +39,8 @@ Dummy is getting spawned in front of you.
 Destroy it as soon as possible!
 
 Skills:  
+- `+` to update your character stats  
+  *Useless for now, because it improves nothing except last time*
 - `e` to jinx target  
   *Jinx - simle attacking skill with your energy, element: none (from the stream)*
 
@@ -38,15 +49,16 @@ Menu:
 - `?` to list parent blocks
 
 # Versions
-- `0`: Dummies
-  - `0.0` Player chain
-    - `0.0.1`: **NIF-N33** Dummies slayer: Wrestless wood  
+- `v0...`: Dummies
+  - `v0.0...` Player chain
+    - `v0.0.1`: NIF-N33 Dummies slayer: Wrestless wood  
       Jinx the wood! 
-    - `0.0.2`: N33+ **Dummies slayer: natural phenomena**  
-      Compressed objects.
-  - `0.1` Spawn chain
-    - `0.1.0`: TBD: Dummies' revenge
-  - `0.2` P2P
+    - `v0.0.2`: N33-N3G **Dummies slayer: natural phenomena**  
+      **Jinx the targed with all you might!**
+      - Compressed objects (floats to int, structs to maps).  
+      - Multiple streams per playable character.  
+  - `v0.1...` *P2P* or *Spawn chain*
+  - `v0.2...` *Spawn chain* or *P2P*
 
 # Data scheme 
 `/` - Root, genesis block

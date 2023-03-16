@@ -18,7 +18,7 @@ func statsFromJson(code string, thing player.BasicStats) player.BasicStats {
   copy := &thing
   decoded, _ := base64.StdEncoding.DecodeString(code)
   err := json.Unmarshal(decoded, copy)
-  if err != nil { fmt.Println(err) ; return thing }
+  if err != nil { fmt.Println("Stats read failed:", err, string(decoded)) ; return thing }
   return *copy
 }
 
@@ -26,6 +26,6 @@ func stateFromJson(code string, thing player.CharStatus) player.CharStatus {
   copy := &thing
   decoded, _ := base64.StdEncoding.DecodeString(code)
   err := json.Unmarshal(decoded, copy)
-  if err != nil { fmt.Println(err) ; return thing }
+  if err != nil { fmt.Println("Stats read failed:", err, string(decoded)) ; return thing }
   return *copy
 }

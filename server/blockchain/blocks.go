@@ -48,6 +48,6 @@ func Deserialize(data []byte) *block {
   var block block
   decoder := gob.NewDecoder(bytes.NewReader(data))
   err := decoder.Decode(&block)
-  if err != nil { fmt.Println(err) }
+  if err != nil { fmt.Println("Block deserialise failed:", err) }
   return &block
 }

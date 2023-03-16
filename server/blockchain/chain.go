@@ -129,7 +129,7 @@ func ListBlocks(chain *BlockChain, meta string, extended bool) {
   if !extended {
     fmt.Println("════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════")
     for {
-      each := deeper(iter, false)
+      each := deeper(iter, true)
       if each.Namespace != next.Namespace { fmt.Printf("────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n") }
       fmt.Printf("\u001b[1m%x\u001b[0m\n", string(each.Hash))
       if len(each.Behind)>0 { fmt.Printf("\u001b[7mTriggered by \u001b[0m%x\n", string(each.Behind)) }

@@ -72,8 +72,8 @@ func init() {
     }
   }
   if You.Basics.ID.Born != 0 {
-    go func() { for { server.UpdPlayerStats(StatChain, You) } }()
-    go func() { for { server.UpdPlayerStatE(StatChain, You) } }()
+    server.UpdPlayer(StatChain, &You)
+    // go func() { for { server.UpdPlayerState(StatChain, You) } }()
     client.PlayerStatus(You)
     player.FoeSpawn(&Target, 1, &Frame.Foe)
     client.PlayerStatus(Target)
