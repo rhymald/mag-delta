@@ -23,7 +23,18 @@ func newProof(b *block, diff int) *pow {
   return &pow{Block: b, Target: forearget, Mod: backarget}
 }
 
-func initData(pow *pow, nonce int64) []byte { return bytes.Join( [][]byte{ pow.Block.Data, pow.Block.Prev, bigToHex(nonce), bigToHex(int64(takeDiff(pow.Block.Namespace, pow.Block.Time))) }, []byte{} ) }
+func initData(pow *pow, nonce int64) []byte { 
+  return bytes.Join( 
+    [][]byte{ 
+      pow.Block.Prev, 
+      pow.Block.Data, 
+      pow.Block.HashTransactions(),
+      bigToHex(nonce), 
+      bigToHex(int64(takeDiff(pow.Block.Namespace, pow.Block.Time))),
+    }, 
+    []byte{},
+  ) 
+}
 
 func bigToHex(num int64) []byte {
   buff := new(bytes.Buffer)

@@ -67,7 +67,8 @@ func UpdPlayerState(chain *blockchain.BlockChain, person *player.Player) {
     }
     return err
   })
-  lasthash := blockchain.AddBlock(chain, dataString, stateid, []byte{})
+  tx := blockchain.NewTX("/", stateid, 1, chain)
+  lasthash := blockchain.AddBlock(chain, dataString, []*blockchain.Transaction{tx}, stateid, []byte{})
   if len(lasthash) == 0 {return}
   err = chain.Database.Update(func(txn *badger.Txn) error {
     err = txn.Set([]byte(anchor), lasthash)
@@ -96,7 +97,8 @@ func UpdPlayerStats(chain *blockchain.BlockChain, person *player.Player) {
   trigger := chain.LastHash[stateid]
   chain.Unlock()
   // ???
-  lasthash := blockchain.AddBlock(chain, dataString, statsid, trigger)
+  tx := blockchain.NewTX("/", statsid, 1, chain)
+  lasthash := blockchain.AddBlock(chain, dataString, []*blockchain.Transaction{tx}, statsid, trigger)
   if len(lasthash) == 0 {return}
   err := chain.Database.Update(func(txn *badger.Txn) error {
     err := txn.Set([]byte(statsid), lasthash)
@@ -136,11 +138,12 @@ func AddPlayer(chain *blockchain.BlockChain, person player.Player) {
     return err
   })
   if err != nil { fmt.Println(err) }
-  lasthash = blockchain.AddBlock(chain, dataString, "/Players", []byte{})
-  if len(lasthash) == 0 {return}
   pid, sid := player.GetID(person)
-  stateid := fmt.Sprintf("/Session/%s/%s", pid, sid)
   statsid := fmt.Sprintf("/Players/%s", pid)
+  stateid := fmt.Sprintf("/Session/%s/%s", pid, sid)
+  tx := blockchain.NewTX("/", statsid, 1, chain)
+  lasthash = blockchain.AddBlock(chain, dataString, []*blockchain.Transaction{tx}, "/Players", []byte{})
+  if len(lasthash) == 0 {return}
   anchor := fmt.Sprintf("/Session/%s", pid)
   // creating subcontexts
   err = chain.Database.Update(func(txn *badger.Txn) error {

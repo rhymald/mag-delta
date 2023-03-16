@@ -54,7 +54,7 @@ func ensureDir(path string) error {
   return err
 }
 
-func InitBlockChain(dbPath string) *BlockChain {
+func InitBlockChain(dbPath string, address string) *BlockChain {
   var lastHash []byte
   var epoch int64
   ensureDir(dbPath)
@@ -66,7 +66,8 @@ func InitBlockChain(dbPath string) *BlockChain {
   err = db.Update(func(txn *badger.Txn) error {
     if _, err := txn.Get([]byte("/")); err == badger.ErrKeyNotFound {
       fmt.Printf("Blockchain does not exist! Genereating...")
-      genesis := genesis()
+      cbtx := CoinbaseTx(address, "/")
+      genesis := genesis(cbtx)
       epoch = genesis.Time
       fmt.Printf(" Writing...")
       err := txn.Set(genesis.Hash, serialize(genesis))
@@ -132,8 +133,9 @@ func ListBlocks(chain *BlockChain, meta string, extended bool) {
       each := deeper(iter, true)
       if each.Namespace != next.Namespace { fmt.Printf("────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n") }
       fmt.Printf("\u001b[1m%x\u001b[0m\n", string(each.Hash))
-      if len(each.Behind)>0 { fmt.Printf("\u001b[7mTriggered by \u001b[0m%x\n", string(each.Behind)) }
-      fmt.Printf("   %d'", -depth)
+      if len(each.Behind)>0 { fmt.Printf("\u001b[7mTriggered by\u001b[0m %x\n", string(each.Behind)) }
+      fmt.Printf(" \u001b[7mBalance %d\u001b[0m", GetBalance(chain, each.Namespace))
+      fmt.Printf(" %d'", -depth)
       fmt.Printf("\u001b[1m%s\u001b[0m", each.Namespace)
       fmt.Printf(" \u001b[1mTime\u001b[0m %d", each.Time)
       fmt.Printf(" \u001b[1mGape\u001b[0m %0.3fs.", float64(each.Time-next.Time)/1000000000)

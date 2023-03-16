@@ -40,7 +40,7 @@ func connect() string { //read app args and connect to db
   flag.Parse()
   if *help { fmt.Println("Application usage: keys") ; flag.PrintDefaults() ; fmt.Println(); os.Exit(1)}
   fmt.Println("\n\t\t", plot.Bar("  Initializing... ",0))
-  StatChain = blockchain.InitBlockChain(DBPath)
+  StatChain = blockchain.InitBlockChain(DBPath, "/")
   return *id
 }
 
